@@ -20,14 +20,14 @@ export function RoleProgress({ roles, compact = false }: RoleProgressProps) {
         {neededRoles.slice(0, 3).map((role, i) => (
           <span
             key={i}
-            className="text-xs px-2 py-0.5 rounded-full bg-uroom-sky-light text-primary font-medium"
+            className="text-2xs px-2 py-0.5 rounded bg-primary/20 text-primary font-mono uppercase tracking-wider border border-primary/40"
           >
             {role.role}
           </span>
         ))}
         {neededRoles.length > 3 && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
-            +{neededRoles.length - 3} more
+          <span className="text-2xs px-2 py-0.5 rounded bg-secondary text-muted-foreground font-mono">
+            +{neededRoles.length - 3}
           </span>
         )}
       </div>
@@ -37,9 +37,9 @@ export function RoleProgress({ roles, compact = false }: RoleProgressProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-foreground">Team Progress</span>
-        <span className="text-primary font-semibold">
-          {totalFilled}/{totalRequired} filled
+        <span className="font-mono font-bold text-foreground uppercase tracking-wider">◈ TEAM STATUS</span>
+        <span className="text-primary font-mono font-bold">
+          {totalFilled}/{totalRequired}
         </span>
       </div>
       
@@ -53,23 +53,25 @@ export function RoleProgress({ roles, compact = false }: RoleProgressProps) {
           return (
             <div
               key={i}
-              className={`flex items-center gap-2 text-sm p-2 rounded-lg ${
-                isFilled ? 'bg-accent/10' : 'bg-secondary'
+              className={`flex items-center gap-2 text-sm p-2 rounded border ${
+                isFilled 
+                  ? 'bg-accent/10 border-accent/40' 
+                  : 'bg-secondary/50 border-primary/20'
               }`}
             >
               <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                className={`w-5 h-5 rounded flex items-center justify-center ${
                   isFilled
-                    ? 'bg-accent text-accent-foreground'
-                    : 'bg-muted-foreground/20 text-muted-foreground'
+                    ? 'bg-accent text-accent-foreground shadow-neon-purple'
+                    : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {isFilled ? <Check size={12} /> : <User size={12} />}
               </div>
-              <span className={isFilled ? 'text-accent' : 'text-foreground'}>
+              <span className={`font-mono text-xs uppercase ${isFilled ? 'text-accent' : 'text-foreground'}`}>
                 {role.role}
               </span>
-              <span className="ml-auto text-muted-foreground text-xs">
+              <span className="ml-auto text-muted-foreground text-2xs font-mono">
                 {role.filled}/{role.required}
               </span>
             </div>

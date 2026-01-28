@@ -1,5 +1,5 @@
 import { UrgentFilter } from '@/types/room';
-import { Zap, Calendar, Rocket, Clock, LayoutGrid } from 'lucide-react';
+import { Zap, Calendar, Rocket, LayoutGrid } from 'lucide-react';
 
 interface FilterBarProps {
   activeFilter: UrgentFilter;
@@ -15,16 +15,16 @@ export function FilterBar({
   onTypeChange,
 }: FilterBarProps) {
   const urgentFilters: { id: UrgentFilter; label: string; icon: typeof Zap }[] = [
-    { id: 'all', label: 'All', icon: LayoutGrid },
-    { id: 'starting-soon', label: 'Starting Soon', icon: Zap },
-    { id: 'this-week', label: 'This Week', icon: Calendar },
-    { id: 'quick-project', label: 'Quick Projects', icon: Rocket },
+    { id: 'all', label: 'ALL', icon: LayoutGrid },
+    { id: 'starting-soon', label: '⚡ LIVE', icon: Zap },
+    { id: 'this-week', label: '▶ WEEK', icon: Calendar },
+    { id: 'quick-project', label: '◉ QUICK', icon: Rocket },
   ];
 
   const typeFilters: { id: 'all' | 'EVENT' | 'PROJECT'; label: string }[] = [
-    { id: 'all', label: 'All Types' },
-    { id: 'EVENT', label: 'Events' },
-    { id: 'PROJECT', label: 'Projects' },
+    { id: 'all', label: 'ALL TYPES' },
+    { id: 'EVENT', label: 'EVENTS' },
+    { id: 'PROJECT', label: 'PROJECTS' },
   ];
 
   return (
@@ -35,15 +35,15 @@ export function FilterBar({
           <button
             key={id}
             onClick={() => onFilterChange(id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-mono font-bold uppercase tracking-wider whitespace-nowrap transition-all border ${
               activeFilter === id
                 ? id === 'starting-soon'
-                  ? 'badge-urgent'
-                  : 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  ? 'badge-urgent border-transparent'
+                  : 'bg-primary text-primary-foreground border-primary shadow-neon-green'
+                : 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50 hover:border-primary/50'
             }`}
           >
-            <Icon size={14} />
+            <Icon size={12} />
             {label}
           </button>
         ))}
@@ -55,10 +55,14 @@ export function FilterBar({
           <button
             key={id}
             onClick={() => onTypeChange(id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 py-1.5 rounded text-xs font-mono font-bold uppercase tracking-wider transition-all border ${
               typeFilter === id
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:text-foreground'
+                ? id === 'EVENT' 
+                  ? 'bg-primary text-primary-foreground border-primary shadow-neon-green'
+                  : id === 'PROJECT'
+                  ? 'bg-accent text-accent-foreground border-accent shadow-neon-purple'
+                  : 'bg-foreground text-background border-foreground'
+                : 'text-muted-foreground hover:text-foreground border-transparent hover:border-border'
             }`}
           >
             {label}

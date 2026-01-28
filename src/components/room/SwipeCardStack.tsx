@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Room } from '@/types/room';
 import { RoomCard } from './RoomCard';
-import { X, Heart, RotateCcw } from 'lucide-react';
+import { X, Heart, RotateCcw, Tv } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface SwipeCardStackProps {
@@ -51,14 +51,14 @@ export function SwipeCardStack({
   if (rooms.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[500px] text-center px-8">
-        <div className="w-20 h-20 rounded-full bg-uroom-sky-light flex items-center justify-center mb-4">
-          <Heart size={32} className="text-primary" />
+        <div className="w-20 h-20 rounded-lg bg-accent/20 border border-accent/40 flex items-center justify-center mb-4 shadow-neon-purple">
+          <Tv size={32} className="text-accent animate-neon" />
         </div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">
-          You've seen all Rooms!
+        <h3 className="text-xl font-display font-bold text-foreground mb-2 glitch-text">
+          ◈ END OF TAPE
         </h3>
-        <p className="text-muted-foreground">
-          Check back later for new rooms or adjust your filters.
+        <p className="text-muted-foreground font-mono text-sm">
+          REWIND OR ADJUST FILTERS TO CONTINUE
         </p>
       </div>
     );
@@ -70,7 +70,7 @@ export function SwipeCardStack({
       <div className="relative h-[520px]">
         {/* Background card (next) */}
         {nextRoom && (
-          <div className="absolute inset-0 transform scale-[0.95] translate-y-2 opacity-50">
+          <div className="absolute inset-0 transform scale-[0.95] translate-y-3 opacity-40">
             <RoomCard room={nextRoom} isInteractive={false} />
           </div>
         )}
@@ -106,20 +106,20 @@ export function SwipeCardStack({
             
             {/* Swipe indicators */}
             <motion.div
-              className="absolute top-8 left-8 bg-destructive text-destructive-foreground font-bold text-2xl px-6 py-2 rounded-xl transform -rotate-12 opacity-0 pointer-events-none"
+              className="absolute top-8 left-8 bg-destructive text-destructive-foreground font-mono font-bold text-xl px-4 py-2 rounded transform -rotate-12 opacity-0 pointer-events-none shadow-neon-purple"
               style={{
                 opacity: isDragging ? 0 : 0,
               }}
             >
-              NOPE
+              ✕ PASS
             </motion.div>
             <motion.div
-              className="absolute top-8 right-8 bg-accent text-accent-foreground font-bold text-2xl px-6 py-2 rounded-xl transform rotate-12 opacity-0 pointer-events-none"
+              className="absolute top-8 right-8 bg-primary text-primary-foreground font-mono font-bold text-xl px-4 py-2 rounded transform rotate-12 opacity-0 pointer-events-none shadow-neon-green"
               style={{
                 opacity: isDragging ? 0 : 0,
               }}
             >
-              JOIN
+              ♥ JOIN
             </motion.div>
           </motion.div>
         </AnimatePresence>
@@ -130,7 +130,7 @@ export function SwipeCardStack({
         <Button
           variant="outline"
           size="lg"
-          className="w-14 h-14 rounded-full border-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all"
+          className="w-14 h-14 rounded-lg border-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all hover:shadow-[0_0_20px_hsl(340,90%,55%,0.5)]"
           onClick={() => handleButtonSwipe('left')}
         >
           <X size={24} />
@@ -140,7 +140,7 @@ export function SwipeCardStack({
           <Button
             variant="outline"
             size="lg"
-            className="w-12 h-12 rounded-full"
+            className="w-12 h-12 rounded-lg border-accent/50 text-accent hover:bg-accent/20 transition-all"
             onClick={onUndo}
           >
             <RotateCcw size={20} />
@@ -149,7 +149,7 @@ export function SwipeCardStack({
         
         <Button
           size="lg"
-          className="w-14 h-14 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground transition-all"
+          className="w-14 h-14 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-neon-green hover:shadow-[0_0_30px_hsl(150,100%,50%,0.6)]"
           onClick={() => handleButtonSwipe('right')}
         >
           <Heart size={24} />

@@ -61,19 +61,17 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // URoom custom colors
-        uroom: {
-          sky: "hsl(var(--uroom-sky))",
-          "sky-light": "hsl(var(--uroom-sky-light))",
-          "sky-dark": "hsl(var(--uroom-sky-dark))",
-          coral: "hsl(var(--uroom-coral))",
-          "coral-light": "hsl(var(--uroom-coral-light))",
-          teal: "hsl(var(--uroom-teal))",
-          "teal-light": "hsl(var(--uroom-teal-light))",
-          purple: "hsl(var(--uroom-purple))",
-          "purple-light": "hsl(var(--uroom-purple-light))",
-          amber: "hsl(var(--uroom-amber))",
-          "amber-light": "hsl(var(--uroom-amber-light))",
+        // VHS Retro custom colors
+        vhs: {
+          green: "hsl(var(--vhs-green))",
+          "green-glow": "hsl(var(--vhs-green-glow))",
+          "green-dark": "hsl(var(--vhs-green-dark))",
+          purple: "hsl(var(--vhs-purple))",
+          "purple-glow": "hsl(var(--vhs-purple-glow))",
+          "purple-dark": "hsl(var(--vhs-purple-dark))",
+          pink: "hsl(var(--vhs-pink))",
+          cyan: "hsl(var(--vhs-cyan))",
+          yellow: "hsl(var(--vhs-yellow))",
         },
       },
       borderRadius: {
@@ -85,8 +83,9 @@ export default {
         "3xl": "2rem",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Space Mono', 'monospace'],
+        mono: ['Space Mono', 'monospace'],
       },
       fontSize: {
         "2xs": "0.625rem",
@@ -140,8 +139,10 @@ export default {
         shimmer: "shimmer 2s linear infinite",
       },
       boxShadow: {
-        card: "0 4px 20px -2px hsl(199 89% 48% / 0.15)",
-        "card-hover": "0 8px 30px -4px hsl(199 89% 48% / 0.25)",
+        card: "0 4px 30px -2px hsl(280 100% 65% / 0.2), 0 0 20px hsl(150 100% 50% / 0.1)",
+        "card-hover": "0 8px 40px -4px hsl(280 100% 65% / 0.35), 0 0 30px hsl(150 100% 50% / 0.15)",
+        "neon-green": "0 0 20px hsl(150 100% 50% / 0.5), 0 0 40px hsl(150 100% 50% / 0.3)",
+        "neon-purple": "0 0 20px hsl(280 100% 65% / 0.5), 0 0 40px hsl(280 100% 65% / 0.3)",
       },
     },
   },

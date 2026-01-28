@@ -2,142 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
-/* URoom Design System - Light blue, modern, student-friendly */
+/* URoom Design System - VHS Retro Green/Purple Aesthetic */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* Core backgrounds */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Core backgrounds - Dark with purple tint */
+    --background: 270 20% 8%;
+    --foreground: 150 80% 90%;
 
     /* Cards & surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 270 25% 12%;
+    --card-foreground: 150 80% 90%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 270 25% 10%;
+    --popover-foreground: 150 80% 90%;
 
-    /* Primary - Sky Blue */
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - Neon Green */
+    --primary: 150 100% 50%;
+    --primary-foreground: 270 20% 8%;
 
-    /* Secondary - Soft slate */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    /* Secondary - Deep Purple */
+    --secondary: 280 60% 25%;
+    --secondary-foreground: 150 80% 90%;
 
     /* Muted */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 270 20% 18%;
+    --muted-foreground: 270 15% 60%;
 
-    /* Accent - Teal */
-    --accent: 173 80% 40%;
+    /* Accent - Electric Purple */
+    --accent: 280 100% 65%;
     --accent-foreground: 0 0% 100%;
 
-    /* Destructive */
-    --destructive: 0 84% 60%;
+    /* Destructive - Hot pink/red */
+    --destructive: 340 90% 55%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders & inputs */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 199 89% 48%;
+    --border: 270 30% 22%;
+    --input: 270 30% 18%;
+    --ring: 150 100% 50%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* URoom Custom Colors */
-    --uroom-sky: 199 89% 48%;
-    --uroom-sky-light: 199 92% 95%;
-    --uroom-sky-dark: 199 89% 38%;
+    /* VHS Custom Colors */
+    --vhs-green: 150 100% 50%;
+    --vhs-green-glow: 150 100% 70%;
+    --vhs-green-dark: 150 80% 25%;
     
-    --uroom-coral: 12 76% 61%;
-    --uroom-coral-light: 12 76% 95%;
+    --vhs-purple: 280 100% 65%;
+    --vhs-purple-glow: 280 100% 80%;
+    --vhs-purple-dark: 280 60% 25%;
     
-    --uroom-teal: 173 80% 40%;
-    --uroom-teal-light: 173 80% 95%;
-    
-    --uroom-purple: 262 83% 58%;
-    --uroom-purple-light: 262 83% 95%;
-    
-    --uroom-amber: 38 92% 50%;
-    --uroom-amber-light: 38 92% 95%;
+    --vhs-pink: 320 100% 60%;
+    --vhs-cyan: 180 100% 50%;
+    --vhs-yellow: 55 100% 50%;
 
     /* Badge colors */
-    --badge-event: 199 89% 48%;
-    --badge-event-foreground: 0 0% 100%;
-    --badge-project: 262 83% 58%;
+    --badge-event: 150 100% 50%;
+    --badge-event-foreground: 270 20% 8%;
+    --badge-project: 280 100% 65%;
     --badge-project-foreground: 0 0% 100%;
-    --badge-urgent: 12 76% 61%;
+    --badge-urgent: 340 90% 55%;
     --badge-urgent-foreground: 0 0% 100%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(173 80% 40%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(199 92% 95%) 0%, hsl(0 0% 100%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
-    --gradient-urgent: linear-gradient(135deg, hsl(12 76% 61%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(150 100% 50%) 0%, hsl(180 100% 50%) 100%);
+    --gradient-purple: linear-gradient(135deg, hsl(280 100% 65%) 0%, hsl(320 100% 60%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(270 25% 12%) 0%, hsl(270 20% 8%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(270 25% 14%) 0%, hsl(280 30% 12%) 100%);
+    --gradient-urgent: linear-gradient(135deg, hsl(340 90% 55%) 0%, hsl(320 100% 60%) 100%);
+    --gradient-vhs: linear-gradient(180deg, 
+      transparent 0%, 
+      hsl(280 100% 65% / 0.03) 50%, 
+      transparent 100%
+    );
+
+    /* VHS Glow effects */
+    --glow-green: 0 0 20px hsl(150 100% 50% / 0.5), 0 0 40px hsl(150 100% 50% / 0.3);
+    --glow-purple: 0 0 20px hsl(280 100% 65% / 0.5), 0 0 40px hsl(280 100% 65% / 0.3);
+    --glow-text: 0 0 10px currentColor;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.1), 0 8px 10px -6px hsl(222 47% 11% / 0.1);
-    --shadow-card: 0 4px 20px -2px hsl(199 89% 48% / 0.15);
-    --shadow-card-hover: 0 8px 30px -4px hsl(199 89% 48% / 0.25);
+    --shadow-sm: 0 1px 2px 0 hsl(270 50% 5% / 0.5);
+    --shadow-md: 0 4px 6px -1px hsl(270 50% 5% / 0.5), 0 2px 4px -2px hsl(270 50% 5% / 0.3);
+    --shadow-lg: 0 10px 15px -3px hsl(270 50% 5% / 0.5), 0 4px 6px -4px hsl(270 50% 5% / 0.3);
+    --shadow-xl: 0 20px 25px -5px hsl(270 50% 5% / 0.5), 0 8px 10px -6px hsl(270 50% 5% / 0.3);
+    --shadow-card: 0 4px 30px -2px hsl(280 100% 65% / 0.2), 0 0 20px hsl(150 100% 50% / 0.1);
+    --shadow-card-hover: 0 8px 40px -4px hsl(280 100% 65% / 0.35), 0 0 30px hsl(150 100% 50% / 0.15);
 
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 199 89% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 199 92% 95%;
-    --sidebar-accent-foreground: 199 89% 38%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 199 89% 48%;
+    --sidebar-background: 270 25% 10%;
+    --sidebar-foreground: 150 80% 90%;
+    --sidebar-primary: 150 100% 50%;
+    --sidebar-primary-foreground: 270 20% 8%;
+    --sidebar-accent: 280 60% 25%;
+    --sidebar-accent-foreground: 150 80% 90%;
+    --sidebar-border: 270 30% 22%;
+    --sidebar-ring: 150 100% 50%;
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 173 80% 40%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 199 89% 48%;
-
-    --uroom-sky-light: 199 89% 15%;
-    --uroom-coral-light: 12 76% 15%;
-    --uroom-teal-light: 173 80% 15%;
-    --uroom-purple-light: 262 83% 15%;
-    --uroom-amber-light: 38 92% 15%;
-
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 199 89% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 199 89% 48%;
+    /* Same as root - VHS is inherently dark */
   }
 }
 
@@ -148,46 +116,184 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    font-family: 'Space Mono', monospace;
+    @apply font-bold tracking-tight;
+  }
+
+  /* VHS scanline overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsl(280 100% 65% / 0.03) 2px,
+      hsl(280 100% 65% / 0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* CRT flicker effect */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    pointer-events: none;
+    z-index: 9998;
+    animation: vhs-flicker 0.15s infinite;
+    opacity: 0.02;
   }
 }
 
+@keyframes vhs-flicker {
+  0% { background: transparent; }
+  50% { background: hsl(150 100% 50% / 0.02); }
+  100% { background: transparent; }
+}
+
+@keyframes vhs-glitch {
+  0%, 100% { transform: translate(0); filter: hue-rotate(0deg); }
+  20% { transform: translate(-2px, 1px); filter: hue-rotate(10deg); }
+  40% { transform: translate(2px, -1px); filter: hue-rotate(-10deg); }
+  60% { transform: translate(-1px, 2px); }
+  80% { transform: translate(1px, -2px); }
+}
+
+@keyframes rgb-shift {
+  0%, 100% { text-shadow: -1px 0 hsl(340 90% 55%), 1px 0 hsl(180 100% 50%); }
+  25% { text-shadow: -2px 0 hsl(340 90% 55%), 2px 0 hsl(180 100% 50%); }
+  50% { text-shadow: -1px 0 hsl(340 90% 55%), 1px 0 hsl(180 100% 50%); }
+  75% { text-shadow: 0 0 hsl(340 90% 55%), 0 0 hsl(180 100% 50%); }
+}
+
+@keyframes neon-pulse {
+  0%, 100% { 
+    opacity: 1;
+    filter: brightness(1) drop-shadow(0 0 5px currentColor);
+  }
+  50% { 
+    opacity: 0.8;
+    filter: brightness(1.2) drop-shadow(0 0 15px currentColor);
+  }
+}
+
+@keyframes tape-wobble {
+  0%, 100% { transform: scaleY(1) translateX(0); }
+  25% { transform: scaleY(1.002) translateX(-0.5px); }
+  50% { transform: scaleY(0.998) translateX(0.5px); }
+  75% { transform: scaleY(1.001) translateX(-0.3px); }
+}
+
+@keyframes tracking-distort {
+  0%, 100% { clip-path: inset(0 0 0 0); }
+  10% { clip-path: inset(5% 0 0 0); }
+  20% { clip-path: inset(0 0 10% 0); }
+  30% { clip-path: inset(15% 0 0 0); }
+  40% { clip-path: inset(0 0 5% 0); }
+  50% { clip-path: inset(8% 0 0 0); }
+}
+
 @layer components {
-  /* Card styles */
+  /* VHS Card styles */
   .card-elevated {
-    @apply bg-card rounded-xl border border-border;
+    @apply bg-card rounded-lg border border-border relative overflow-hidden;
     box-shadow: var(--shadow-card);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+    background: var(--gradient-card);
+  }
+
+  .card-elevated::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(150 100% 50% / 0.1),
+      transparent
+    );
+    transition: left 0.5s ease;
+    pointer-events: none;
   }
 
   .card-elevated:hover {
     box-shadow: var(--shadow-card-hover);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    border-color: hsl(var(--primary) / 0.5);
   }
 
-  /* Badge base styles */
+  .card-elevated:hover::before {
+    left: 100%;
+  }
+
+  /* Neon text effect */
+  .neon-text {
+    color: hsl(var(--primary));
+    text-shadow: 
+      0 0 5px hsl(var(--primary)),
+      0 0 10px hsl(var(--primary)),
+      0 0 20px hsl(var(--primary)),
+      0 0 40px hsl(var(--primary));
+  }
+
+  .neon-text-purple {
+    color: hsl(var(--accent));
+    text-shadow: 
+      0 0 5px hsl(var(--accent)),
+      0 0 10px hsl(var(--accent)),
+      0 0 20px hsl(var(--accent)),
+      0 0 40px hsl(var(--accent));
+  }
+
+  /* VHS Badge styles */
   .badge-event {
-    @apply bg-primary text-primary-foreground;
+    @apply bg-primary text-primary-foreground font-mono uppercase tracking-wider;
+    box-shadow: var(--glow-green);
+    animation: neon-pulse 2s ease-in-out infinite;
   }
 
   .badge-project {
-    background: hsl(var(--uroom-purple));
-    @apply text-white;
+    background: hsl(var(--accent));
+    @apply text-white font-mono uppercase tracking-wider;
+    box-shadow: var(--glow-purple);
+    animation: neon-pulse 2s ease-in-out infinite;
+    animation-delay: 0.5s;
   }
 
   .badge-urgent {
     background: var(--gradient-urgent);
-    @apply text-white;
+    @apply text-white font-mono uppercase tracking-wider;
+    animation: vhs-glitch 3s ease-in-out infinite;
   }
 
-  /* Swipe card styles */
+  /* VHS Swipe card styles */
   .swipe-card {
     @apply absolute w-full cursor-grab active:cursor-grabbing;
     touch-action: pan-y;
+    animation: tape-wobble 8s ease-in-out infinite;
+  }
+
+  /* Glitch text effect */
+  .glitch-text {
+    position: relative;
+    animation: rgb-shift 4s ease-in-out infinite;
   }
 
   /* Gradient text */
@@ -198,42 +304,142 @@
     background-clip: text;
   }
 
-  /* Glass effect */
-  .glass {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20;
+  .gradient-text-purple {
+    background: var(--gradient-purple);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  /* Progress bar */
+  /* VHS Glass effect */
+  .glass {
+    @apply backdrop-blur-xl border;
+    background: hsl(var(--card) / 0.7);
+    border-color: hsl(var(--primary) / 0.2);
+    box-shadow: inset 0 0 20px hsl(var(--primary) / 0.05);
+  }
+
+  /* VHS Progress bar */
   .progress-bar {
     @apply h-2 rounded-full overflow-hidden;
-    background: hsl(var(--uroom-sky-light));
+    background: hsl(var(--muted));
   }
 
   .progress-bar-fill {
-    @apply h-full rounded-full transition-all duration-500;
+    @apply h-full rounded-full transition-all duration-500 relative;
     background: var(--gradient-primary);
+    box-shadow: var(--glow-green);
   }
 
-  /* Button variants */
+  /* VHS Button variants */
   .btn-gradient {
     background: var(--gradient-primary);
-    @apply text-white font-medium rounded-xl px-6 py-3 transition-all duration-300;
-    box-shadow: var(--shadow-md);
+    @apply text-primary-foreground font-mono font-bold uppercase tracking-wider rounded-lg px-6 py-3 transition-all duration-300 relative overflow-hidden;
+    box-shadow: var(--glow-green);
+  }
+
+  .btn-gradient::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(0 0% 100% / 0.2),
+      transparent
+    );
+    transition: left 0.4s ease;
   }
 
   .btn-gradient:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 30px hsl(150 100% 50% / 0.5), 0 0 60px hsl(150 100% 50% / 0.3);
+  }
+
+  .btn-gradient:hover::before {
+    left: 100%;
+  }
+
+  .btn-purple {
+    background: var(--gradient-purple);
+    @apply text-white font-mono font-bold uppercase tracking-wider rounded-lg px-6 py-3 transition-all duration-300;
+    box-shadow: var(--glow-purple);
+  }
+
+  .btn-purple:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 30px hsl(280 100% 65% / 0.5), 0 0 60px hsl(280 100% 65% / 0.3);
   }
 
   /* Input focus styles */
   .input-focus {
-    @apply focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200;
+    @apply focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-200;
+    background: hsl(var(--input));
+  }
+
+  .input-focus:focus {
+    box-shadow: var(--glow-green);
   }
 
   /* Navigation active state */
   .nav-active {
-    @apply text-primary bg-primary/10 rounded-lg;
+    @apply text-primary relative;
+  }
+
+  .nav-active::after {
+    content: "";
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    box-shadow: var(--glow-green);
+  }
+
+  /* VHS timestamp style */
+  .vhs-timestamp {
+    @apply font-mono text-xs tracking-wider;
+    color: hsl(var(--primary));
+    text-shadow: 0 0 5px hsl(var(--primary));
+  }
+
+  /* Retro grid background */
+  .retro-grid {
+    background-image: 
+      linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* VHS border effect */
+  .vhs-border {
+    position: relative;
+  }
+
+  .vhs-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(45deg, 
+      hsl(var(--primary)), 
+      hsl(var(--accent)), 
+      hsl(var(--primary))
+    );
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .vhs-border:hover::before {
+    opacity: 1;
+    animation: neon-pulse 1.5s ease-in-out infinite;
   }
 }
 
@@ -255,5 +461,22 @@
 
   .safe-top {
     padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* VHS utility classes */
+  .animate-glitch {
+    animation: vhs-glitch 0.3s ease-in-out;
+  }
+
+  .animate-neon {
+    animation: neon-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-tracking {
+    animation: tracking-distort 10s ease-in-out infinite;
+  }
+
+  .text-glow {
+    text-shadow: var(--glow-text);
   }
 }

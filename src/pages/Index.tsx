@@ -72,11 +72,11 @@ const Index = () => {
       <div className="px-4 pt-4 pb-6">
         {/* Welcome message */}
         <div className="mb-4">
-          <h2 className="text-xl font-semibold text-foreground">
-            Find Your Room
+          <h2 className="text-xl font-display font-bold text-foreground glitch-text">
+            ◈ FIND YOUR ROOM
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Swipe right to join, left to pass
+          <p className="text-sm text-muted-foreground font-mono">
+            SWIPE → JOIN • SWIPE ← PASS
           </p>
         </div>
 
@@ -90,7 +90,9 @@ const Index = () => {
       </div>
 
       {/* Swipe Cards */}
-      <div className="px-4">
+      <div className="px-4 relative">
+        {/* VHS grid overlay */}
+        <div className="absolute inset-0 retro-grid opacity-30 pointer-events-none" />
         <SwipeCardStack
           rooms={rooms}
           onSwipeLeft={handleSwipeLeft}
