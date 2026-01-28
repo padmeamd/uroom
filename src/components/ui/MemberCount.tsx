@@ -11,24 +11,24 @@ export function MemberCount({ current, max, size = 'md' }: MemberCountProps) {
   const isFull = current >= max;
   const isAlmostFull = percentage >= 75;
   
-  const sizeClasses = size === 'sm' ? 'text-xs gap-1' : 'text-sm gap-1.5';
-  const iconSize = size === 'sm' ? 12 : 14;
+  const sizeClasses = size === 'sm' ? 'text-2xs gap-1' : 'text-xs gap-1.5';
+  const iconSize = size === 'sm' ? 10 : 12;
   
   return (
     <div
-      className={`inline-flex items-center ${sizeClasses} ${
+      className={`inline-flex items-center font-mono uppercase tracking-wider ${sizeClasses} ${
         isFull
           ? 'text-destructive'
           : isAlmostFull
-          ? 'text-uroom-amber'
-          : 'text-muted-foreground'
+          ? 'text-vhs-yellow'
+          : 'text-primary'
       }`}
     >
       <Users size={iconSize} />
-      <span className="font-medium">
+      <span className="font-bold">
         {current}/{max}
       </span>
-      {isFull && <span className="text-2xs uppercase font-bold">Full</span>}
+      {isFull && <span className="text-2xs font-bold animate-neon">FULL</span>}
     </div>
   );
 }

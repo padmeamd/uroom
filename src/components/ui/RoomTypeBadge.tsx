@@ -8,12 +8,12 @@ interface RoomTypeBadgeProps {
 
 export function RoomTypeBadge({ type, size = 'md' }: RoomTypeBadgeProps) {
   const isEvent = type === 'EVENT';
-  const sizeClasses = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-3 py-1';
-  const iconSize = size === 'sm' ? 12 : 14;
+  const sizeClasses = size === 'sm' ? 'text-2xs px-2 py-0.5' : 'text-xs px-3 py-1';
+  const iconSize = size === 'sm' ? 10 : 12;
   
   return (
     <span
-      className={`inline-flex items-center gap-1 font-semibold rounded-full ${sizeClasses} ${
+      className={`inline-flex items-center gap-1.5 font-mono font-bold uppercase tracking-widest rounded ${sizeClasses} ${
         isEvent ? 'badge-event' : 'badge-project'
       }`}
     >
@@ -29,22 +29,21 @@ interface UrgentBadgeProps {
 }
 
 export function UrgentBadge({ size = 'md', variant = 'urgent' }: UrgentBadgeProps) {
-  const sizeClasses = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-3 py-1';
-  const iconSize = size === 'sm' ? 12 : 14;
+  const sizeClasses = size === 'sm' ? 'text-2xs px-2 py-0.5' : 'text-xs px-3 py-1';
+  const iconSize = size === 'sm' ? 10 : 12;
   
   const variants = {
-    urgent: { label: 'URGENT', icon: Zap },
-    soon: { label: 'Starting Soon', icon: Clock },
-    'this-week': { label: 'This Week', icon: Calendar },
+    urgent: { label: '⚡ URGENT', icon: Zap },
+    soon: { label: '◉ LIVE SOON', icon: Clock },
+    'this-week': { label: '▶ THIS WEEK', icon: Calendar },
   };
   
   const { label, icon: Icon } = variants[variant];
   
   return (
     <span
-      className={`inline-flex items-center gap-1 font-semibold rounded-full ${sizeClasses} badge-urgent animate-pulse-soft`}
+      className={`inline-flex items-center gap-1.5 font-mono font-bold uppercase tracking-widest rounded ${sizeClasses} badge-urgent`}
     >
-      <Icon size={iconSize} />
       {label}
     </span>
   );
