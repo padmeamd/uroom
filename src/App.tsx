@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import CreateRoom from "./pages/CreateRoom";
 import Chats from "./pages/Chats";
+import ChatRoom from "./pages/ChatRoom";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/explore" element={<Explore />} />
           <Route path="/create" element={<CreateRoom />} />
           <Route path="/chats" element={<Chats />} />
+          <Route path="/chats/:chatId" element={<ChatRoom />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
