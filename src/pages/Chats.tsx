@@ -1,6 +1,7 @@
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { MessageCircle, Users, Calendar, Briefcase } from 'lucide-react';
-import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 
 interface Chat {
   id: string;
@@ -58,6 +59,8 @@ const mockChats: Chat[] = [
 ];
 
 const Chats = () => {
+  const navigate = useNavigate();
+
   const formatTime = (date: Date) => {
     if (isToday(date)) return format(date, 'h:mm a');
     if (isYesterday(date)) return 'Yesterday';
@@ -77,7 +80,8 @@ const Chats = () => {
         {mockChats.map(chat => (
           <div
             key={chat.id}
-            className="px-4 py-3 flex gap-3 hover:bg-secondary/50 cursor-pointer transition-colors"
+            onClick={() => navigate(`/chats/${chat.id}`)}
+            className="px-4 py-3 flex gap-3 hover:bg-secondary/50 cursor-pointer transition-colors active:bg-vhs-green/10"
           >
             {/* Avatar stack */}
             <div className="relative w-12 h-12 shrink-0">
