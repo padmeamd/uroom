@@ -1,13 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Smile } from 'lucide-react';
+import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Smile, Paperclip, X, FileText, Download, Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, isToday, isYesterday } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface Attachment {
+  id: string;
+  url: string;
+  name: string;
+  type: 'image' | 'file';
+  mimeType: string;
+  size: number;
+}
 
 interface ChatMessage {
   id: string;
@@ -17,6 +28,7 @@ interface ChatMessage {
   text: string;
   timestamp: Date;
   isCurrentUser: boolean;
+  attachments?: Attachment[];
 }
 
 interface ChatRoomData {
@@ -187,14 +199,25 @@ const mockMessages: Record<string, ChatMessage[]> = {
   ],
 };
 
+interface PendingFile {
+  file: File;
+  preview?: string;
+  type: 'image' | 'file';
+}
+
 const ChatRoom = () => {
   const { chatId } = useParams<{ chatId: string }>();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [room, setRoom] = useState<ChatRoomData | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (chatId && mockChatRooms[chatId]) {
@@ -204,7 +227,6 @@ const ChatRoom = () => {
   }, [chatId]);
 
   useEffect(() => {
-    // Scroll to bottom on new messages
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -220,22 +242,130 @@ const ChatRoom = () => {
     return format(date, 'MMMM d, yyyy');
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
 
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      senderId: 'me',
-      senderName: 'You',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
-      text: newMessage.trim(),
-      timestamp: new Date(),
-      isCurrentUser: true,
-    };
+  const isImageFile = (mimeType: string) => {
+    return mimeType.startsWith('image/');
+  };
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
-    inputRef.current?.focus();
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'file') => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newPending: PendingFile[] = [];
+    
+    Array.from(files).forEach(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 10MB)`);
+        return;
+      }
+
+      const pendingFile: PendingFile = {
+        file,
+        type: isImageFile(file.type) ? 'image' : 'file',
+      };
+
+      if (isImageFile(file.type)) {
+        pendingFile.preview = URL.createObjectURL(file);
+      }
+
+      newPending.push(pendingFile);
+    });
+
+    setPendingFiles(prev => [...prev, ...newPending]);
+    e.target.value = '';
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => {
+      const newFiles = [...prev];
+      if (newFiles[index].preview) {
+        URL.revokeObjectURL(newFiles[index].preview!);
+      }
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+  };
+
+  const uploadFiles = async (): Promise<Attachment[]> => {
+    const attachments: Attachment[] = [];
+
+    for (const pending of pendingFiles) {
+      const fileExt = pending.file.name.split('.').pop();
+      const fileName = `${chatId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('chat-attachments')
+        .upload(fileName, pending.file);
+
+      if (error) {
+        console.error('Upload error:', error);
+        toast.error(`Failed to upload ${pending.file.name}`);
+        continue;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(data.path);
+
+      attachments.push({
+        id: Date.now().toString() + Math.random().toString(36).substring(7),
+        url: urlData.publicUrl,
+        name: pending.file.name,
+        type: pending.type,
+        mimeType: pending.file.type,
+        size: pending.file.size,
+      });
+    }
+
+    return attachments;
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() && pendingFiles.length === 0) return;
+
+    setIsUploading(true);
+
+    try {
+      let attachments: Attachment[] = [];
+      
+      if (pendingFiles.length > 0) {
+        attachments = await uploadFiles();
+        // Clean up previews
+        pendingFiles.forEach(p => {
+          if (p.preview) URL.revokeObjectURL(p.preview);
+        });
+        setPendingFiles([]);
+      }
+
+      const message: ChatMessage = {
+        id: Date.now().toString(),
+        senderId: 'me',
+        senderName: 'You',
+        senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
+        text: newMessage.trim(),
+        timestamp: new Date(),
+        isCurrentUser: true,
+        attachments: attachments.length > 0 ? attachments : undefined,
+      };
+
+      setMessages(prev => [...prev, message]);
+      setNewMessage('');
+      inputRef.current?.focus();
+      
+      if (attachments.length > 0) {
+        toast.success(`Sent ${attachments.length} file${attachments.length > 1 ? 's' : ''}`);
+      }
+    } catch (error) {
+      console.error('Send error:', error);
+      toast.error('Failed to send message');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -245,7 +375,6 @@ const ChatRoom = () => {
     }
   };
 
-  // Group messages by date
   const groupedMessages = messages.reduce((groups, message) => {
     const dateKey = format(message.timestamp, 'yyyy-MM-dd');
     if (!groups[dateKey]) {
@@ -279,7 +408,6 @@ const ChatRoom = () => {
             <ArrowLeft size={20} />
           </Button>
           
-          {/* Room avatar stack */}
           <div className="relative w-10 h-10 shrink-0">
             {room.avatars.slice(0, 2).map((avatar, i) => (
               <img
@@ -324,7 +452,6 @@ const ChatRoom = () => {
           <AnimatePresence>
             {Object.entries(groupedMessages).map(([dateKey, dateMessages]) => (
               <div key={dateKey}>
-                {/* Date divider */}
                 <div className="flex items-center justify-center my-4">
                   <div className="px-3 py-1 rounded-full bg-secondary/50 border border-vhs-green/20">
                     <span className="text-xs font-mono text-muted-foreground">
@@ -333,7 +460,6 @@ const ChatRoom = () => {
                   </div>
                 </div>
 
-                {/* Messages for this date */}
                 {dateMessages.map((message, index) => {
                   const showAvatar = index === 0 || 
                     dateMessages[index - 1]?.senderId !== message.senderId;
@@ -346,7 +472,6 @@ const ChatRoom = () => {
                       transition={{ duration: 0.2 }}
                       className={`flex gap-2 mb-2 ${message.isCurrentUser ? 'flex-row-reverse' : ''}`}
                     >
-                      {/* Avatar */}
                       <div className="w-8 shrink-0">
                         {showAvatar && !message.isCurrentUser && (
                           <Avatar className="w-8 h-8 border border-vhs-green/30">
@@ -358,22 +483,71 @@ const ChatRoom = () => {
                         )}
                       </div>
 
-                      {/* Message bubble */}
                       <div className={`max-w-[75%] ${message.isCurrentUser ? 'items-end' : 'items-start'}`}>
                         {showAvatar && !message.isCurrentUser && (
                           <span className="text-xs text-vhs-green font-mono ml-1 mb-1 block">
                             {message.senderName}
                           </span>
                         )}
-                        <div
-                          className={`px-3 py-2 rounded-2xl ${
-                            message.isCurrentUser
-                              ? 'bg-vhs-green text-black rounded-tr-sm'
-                              : 'bg-secondary/80 border border-vhs-purple/30 rounded-tl-sm'
-                          }`}
-                        >
-                          <p className="text-sm">{message.text}</p>
-                        </div>
+                        
+                        {/* Attachments */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className={`flex flex-wrap gap-2 mb-1 ${message.isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                            {message.attachments.map((attachment) => (
+                              attachment.type === 'image' ? (
+                                <motion.div
+                                  key={attachment.id}
+                                  whileHover={{ scale: 1.02 }}
+                                  className="relative cursor-pointer"
+                                  onClick={() => setSelectedImage(attachment.url)}
+                                >
+                                  <img
+                                    src={attachment.url}
+                                    alt={attachment.name}
+                                    className="max-w-[200px] max-h-[200px] rounded-lg border border-vhs-purple/30 object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-lg opacity-0 hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
+                                    <span className="text-[10px] text-white font-mono truncate max-w-[180px] px-2">
+                                      {attachment.name}
+                                    </span>
+                                  </div>
+                                </motion.div>
+                              ) : (
+                                <a
+                                  key={attachment.id}
+                                  href={attachment.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                                    message.isCurrentUser 
+                                      ? 'bg-vhs-green/20 border-vhs-green/30 hover:bg-vhs-green/30' 
+                                      : 'bg-secondary/50 border-vhs-purple/30 hover:bg-secondary'
+                                  }`}
+                                >
+                                  <FileText size={16} className="text-vhs-purple shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium truncate max-w-[150px]">{attachment.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{formatFileSize(attachment.size)}</p>
+                                  </div>
+                                  <Download size={14} className="text-muted-foreground shrink-0" />
+                                </a>
+                              )
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Text bubble */}
+                        {message.text && (
+                          <div
+                            className={`px-3 py-2 rounded-2xl ${
+                              message.isCurrentUser
+                                ? 'bg-vhs-green text-black rounded-tr-sm'
+                                : 'bg-secondary/80 border border-vhs-purple/30 rounded-tl-sm'
+                            }`}
+                          >
+                            <p className="text-sm">{message.text}</p>
+                          </div>
+                        )}
                         <span className={`text-[10px] text-muted-foreground mt-1 block ${
                           message.isCurrentUser ? 'text-right mr-1' : 'ml-1'
                         }`}>
@@ -381,7 +555,6 @@ const ChatRoom = () => {
                         </span>
                       </div>
 
-                      {/* Spacer for current user messages */}
                       {message.isCurrentUser && <div className="w-8 shrink-0" />}
                     </motion.div>
                   );
@@ -401,22 +574,96 @@ const ChatRoom = () => {
           )}
         </ScrollArea>
 
+        {/* Pending files preview */}
+        <AnimatePresence>
+          {pendingFiles.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="border-t border-vhs-green/20 bg-secondary/30 overflow-hidden"
+            >
+              <div className="p-3 flex gap-2 overflow-x-auto">
+                {pendingFiles.map((pending, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    className="relative shrink-0"
+                  >
+                    {pending.type === 'image' && pending.preview ? (
+                      <div className="relative">
+                        <img
+                          src={pending.preview}
+                          alt={pending.file.name}
+                          className="w-16 h-16 rounded-lg object-cover border border-vhs-purple/30"
+                        />
+                        <button
+                          onClick={() => removePendingFile(index)}
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-vhs-purple/30">
+                        <FileText size={16} className="text-vhs-purple" />
+                        <div className="max-w-[100px]">
+                          <p className="text-xs truncate">{pending.file.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{formatFileSize(pending.file.size)}</p>
+                        </div>
+                        <button
+                          onClick={() => removePendingFile(index)}
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Message input */}
         <div className="p-3 border-t border-vhs-green/20 bg-background/95 backdrop-blur-sm">
           <div className="flex items-center gap-2">
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFileSelect(e, 'image')}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFileSelect(e, 'file')}
+            />
+            
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => imageInputRef.current?.click()}
               className="text-muted-foreground hover:text-vhs-purple shrink-0"
+              disabled={isUploading}
             >
               <Image size={20} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => fileInputRef.current?.click()}
               className="text-muted-foreground hover:text-vhs-purple shrink-0"
+              disabled={isUploading}
             >
-              <Smile size={20} />
+              <Paperclip size={20} />
             </Button>
             
             <div className="flex-1 relative">
@@ -427,20 +674,52 @@ const ChatRoom = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
                 className="pr-12 bg-secondary/50 border-vhs-green/30 focus:border-vhs-green placeholder:text-muted-foreground/50"
+                disabled={isUploading}
               />
             </div>
             
             <Button
               size="icon"
               onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
+              disabled={(!newMessage.trim() && pendingFiles.length === 0) || isUploading}
               className="bg-vhs-green hover:bg-vhs-green/90 text-black shrink-0 disabled:opacity-50"
             >
-              <Send size={18} />
+              {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Image lightbox */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 text-white hover:bg-white/10"
+            >
+              <X size={24} />
+            </Button>
+            <motion.img
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              src={selectedImage}
+              alt="Full size"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 };
