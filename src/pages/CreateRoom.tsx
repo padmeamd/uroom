@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Calendar, Briefcase, MapPin, Users, Clock, ImagePlus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { QuizBuilder } from '@/components/room/QuizBuilder';
+import { QuizQuestion } from '@/types/quiz';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type RoomType = 'EVENT' | 'PROJECT';
 
@@ -14,6 +17,7 @@ const CreateRoom = () => {
   const [roomType, setRoomType] = useState<RoomType>('EVENT');
   const [isUrgent, setIsUrgent] = useState(false);
   const [quizRequired, setQuizRequired] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [inactivityKick, setInactivityKick] = useState(false);
 
   const handleCreate = () => {
@@ -173,15 +177,44 @@ const CreateRoom = () => {
             </h3>
             
             {/* Quiz Required */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm text-foreground">Require Application</p>
-                <p className="text-xs text-muted-foreground">Ask questions before joining</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm text-foreground">Require Application</p>
+                  <p className="text-xs text-muted-foreground">Ask questions before joining</p>
+                </div>
+                <Switch
+                  checked={quizRequired}
+                  onCheckedChange={(checked) => {
+                    setQuizRequired(checked);
+                    if (checked && quizQuestions.length === 0) {
+                      // Add a default question when enabling
+                      setQuizQuestions([{
+                        id: crypto.randomUUID(),
+                        type: 'text',
+                        question: 'Why do you want to join this project?',
+                        required: true,
+                      }]);
+                    }
+                  }}
+                />
               </div>
-              <Switch
-                checked={quizRequired}
-                onCheckedChange={setQuizRequired}
-              />
+              
+              <AnimatePresence>
+                {quizRequired && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <QuizBuilder
+                      questions={quizQuestions}
+                      onChange={setQuizQuestions}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Inactivity Kick */}
