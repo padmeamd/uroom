@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Smile, Paperclip, X, FileText, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Smile, Paperclip, X, FileText, Download, Loader2, MapPin } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MemberProfileSheet } from '@/components/room/MemberProfileSheet';
+import { LocationPicker, type LocationData } from '@/components/room/LocationPicker';
 
 interface Attachment {
   id: string;
@@ -30,6 +31,7 @@ interface ChatMessage {
   timestamp: Date;
   isCurrentUser: boolean;
   attachments?: Attachment[];
+  location?: LocationData;
 }
 
 interface ChatRoomData {
@@ -216,6 +218,7 @@ const ChatRoom = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<{ id: string; name: string; avatar: string } | null>(null);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -368,6 +371,21 @@ const ChatRoom = () => {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleSendLocation = (location: LocationData) => {
+    const message: ChatMessage = {
+      id: Date.now().toString(),
+      senderId: 'me',
+      senderName: 'You',
+      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
+      text: '',
+      timestamp: new Date(),
+      isCurrentUser: true,
+      location,
+    };
+    setMessages(prev => [...prev, message]);
+    toast.success('Location shared!');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -545,7 +563,36 @@ const ChatRoom = () => {
                           </div>
                         )}
 
-                        {/* Text bubble */}
+                        {/* Location bubble */}
+                        {message.location && (
+                          <a
+                            href={`https://www.openstreetmap.org/?mlat=${message.location.lat}&mlon=${message.location.lng}#map=15/${message.location.lat}/${message.location.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`block rounded-xl overflow-hidden border transition-all hover:scale-[1.02] mb-1 ${
+                              message.isCurrentUser
+                                ? 'border-vhs-green/30'
+                                : 'border-vhs-purple/30'
+                            }`}
+                            style={{ maxWidth: 240 }}
+                          >
+                            <iframe
+                              title="Location"
+                              width="240"
+                              height="130"
+                              style={{ border: 0, pointerEvents: 'none' }}
+                              loading="lazy"
+                              src={`https://www.openstreetmap.org/export/embed.html?bbox=${message.location.lng - 0.015},${message.location.lat - 0.008},${message.location.lng + 0.015},${message.location.lat + 0.008}&layer=mapnik&marker=${message.location.lat},${message.location.lng}`}
+                            />
+                            <div className={`flex items-center gap-2 px-3 py-2 ${
+                              message.isCurrentUser ? 'bg-vhs-green/20' : 'bg-secondary/50'
+                            }`}>
+                              <MapPin size={14} className="text-primary shrink-0" />
+                              <span className="text-xs font-mono truncate">{message.location.label}</span>
+                            </div>
+                          </a>
+                        )}
+
                         {message.text && (
                           <div
                             className={`px-3 py-2 rounded-2xl ${
@@ -674,6 +721,15 @@ const ChatRoom = () => {
             >
               <Paperclip size={20} />
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocationPickerOpen(true)}
+              className="text-muted-foreground hover:text-primary shrink-0"
+              disabled={isUploading}
+            >
+              <MapPin size={20} />
+            </Button>
             
             <div className="flex-1 relative">
               <Input
@@ -706,7 +762,13 @@ const ChatRoom = () => {
         onOpenChange={(open) => !open && setSelectedMember(null)}
       />
 
-      {/* Image lightbox */}
+      {/* Location picker */}
+      <LocationPicker
+        open={locationPickerOpen}
+        onOpenChange={setLocationPickerOpen}
+        onSendLocation={handleSendLocation}
+      />
+
       <AnimatePresence>
         {selectedImage && (
           <motion.div
