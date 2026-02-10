@@ -10,6 +10,7 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { MemberProfileSheet } from '@/components/room/MemberProfileSheet';
 
 interface Attachment {
   id: string;
@@ -214,6 +215,7 @@ const ChatRoom = () => {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<{ id: string; name: string; avatar: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -474,7 +476,14 @@ const ChatRoom = () => {
                     >
                       <div className="w-8 shrink-0">
                         {showAvatar && !message.isCurrentUser && (
-                          <Avatar className="w-8 h-8 border border-vhs-green/30">
+                          <Avatar
+                            className="w-8 h-8 border border-vhs-green/30 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                            onClick={() => setSelectedMember({
+                              id: message.senderId,
+                              name: message.senderName,
+                              avatar: message.senderAvatar,
+                            })}
+                          >
                             <AvatarImage src={message.senderAvatar} />
                             <AvatarFallback className="bg-vhs-green/20 text-vhs-green text-xs">
                               {message.senderName.charAt(0)}
@@ -689,6 +698,13 @@ const ChatRoom = () => {
           </div>
         </div>
       </div>
+
+      {/* Member profile sheet */}
+      <MemberProfileSheet
+        member={selectedMember}
+        open={!!selectedMember}
+        onOpenChange={(open) => !open && setSelectedMember(null)}
+      />
 
       {/* Image lightbox */}
       <AnimatePresence>
