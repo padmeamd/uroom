@@ -9,58 +9,81 @@ export interface RoleRequirement {
 export interface Room {
   id: string;
   title: string;
-  type: RoomType;
-  bannerUrl: string;
-  description: string;
-  location: string;
-  dateTime: Date;
-  university: string;
-  creatorId: string;
-  creatorName: string;
-  creatorAvatar: string;
+  roomType: RoomType;
+  bannerUrl?: string;
+  description?: string;
+  location?: string;
+  dateTime?: string;
+  university?: string;
+  creatorId?: string;
+  creatorName?: string;
+  creatorAvatar?: string;
   tags: string[];
   isUrgent: boolean;
   maxMembers: number;
   currentMembers: number;
-  roleRequirements: RoleRequirement[];
-  quizRequired?: boolean;
-  autoAccept?: boolean;
-  inactivityPolicy?: {
-    enabled: boolean;
-    timeoutHours: 24 | 36 | 48;
-  };
-  aiRecommendation?: {
-    score: number;
-    reasons: string[];
-  };
-  createdAt: Date;
+  quizRequired: boolean;
+  autoAccept: boolean;
+  inactivityTimeoutHours?: number;
+  createdAt: string;
 }
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  university: string;
+  university?: string;
   age?: number;
-  photoUrl: string;
+  photoUrl?: string;
   interests: string[];
   skills: string[];
-  about: string;
+  about?: string;
   portfolioUrl?: string;
   instagramUrl?: string;
   githubUrl?: string;
   linkedinUrl?: string;
-  createdAt: Date;
+  level: number;
+  xp: number;
+  streak: number;
+  createdAt: string;
 }
 
 export interface Message {
   id: string;
-  roomId: string;
+  roomId?: string;
   senderId: string;
   senderName: string;
   senderAvatar: string;
   text: string;
-  createdAt: Date;
+  createdAt: string;
+  location?: LocationData;
+  attachments?: Attachment[];
+  isCurrentUser: boolean;
+}
+
+export interface LocationData {
+  lat: number;
+  lng: number;
+  label: string;
+}
+
+export interface Attachment {
+  id: string;
+  url: string;
+  name: string;
+  type: 'IMAGE' | 'FILE';
+  mimeType: string;
+  size: number;
+}
+
+export interface ChatRoom {
+  id: string;
+  roomId: string;
+  roomTitle: string;
+  roomType: RoomType;
+  memberCount: number;
+  memberAvatars: string[];
+  createdAt: string;
 }
 
 export type UrgentFilter = 'all' | 'this-week' | 'quick-project' | 'starting-soon';

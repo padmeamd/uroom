@@ -1,206 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Smile, Paperclip, X, FileText, Download, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Paperclip, X, FileText, Download, Loader2, MapPin } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, isToday, isYesterday } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MemberProfileSheet } from '@/components/room/MemberProfileSheet';
 import { LocationPicker, type LocationData } from '@/components/room/LocationPicker';
+import { api } from '@/lib/api';
+import { ChatRoom as ChatRoomData, Message } from '@/types/room';
 
 interface Attachment {
   id: string;
   url: string;
   name: string;
-  type: 'image' | 'file';
+  type: 'IMAGE' | 'FILE';
   mimeType: string;
   size: number;
 }
-
-interface ChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar: string;
-  text: string;
-  timestamp: Date;
-  isCurrentUser: boolean;
-  attachments?: Attachment[];
-  location?: LocationData;
-}
-
-interface ChatRoomData {
-  id: string;
-  roomTitle: string;
-  roomType: 'EVENT' | 'PROJECT';
-  memberCount: number;
-  avatars: string[];
-  members: { id: string; name: string; avatar: string }[];
-}
-
-const mockChatRooms: Record<string, ChatRoomData> = {
-  '1': {
-    id: '1',
-    roomTitle: 'Board Game Night 🎲',
-    roomType: 'EVENT',
-    memberCount: 4,
-    avatars: [
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50',
-    ],
-    members: [
-      { id: 'jamie', name: 'Jamie Chen', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50' },
-      { id: 'alex', name: 'Alex Rivera', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50' },
-      { id: 'sam', name: 'Sam Kim', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50' },
-      { id: 'me', name: 'You', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50' },
-    ],
-  },
-  '2': {
-    id: '2',
-    roomTitle: 'Short Film: "The Last Lecture"',
-    roomType: 'PROJECT',
-    memberCount: 2,
-    avatars: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50',
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
-    ],
-    members: [
-      { id: 'alex', name: 'Alex Rivera', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50' },
-      { id: 'me', name: 'You', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50' },
-    ],
-  },
-  '3': {
-    id: '3',
-    roomTitle: 'Photography Walk: Golden Hour',
-    roomType: 'EVENT',
-    memberCount: 7,
-    avatars: [
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50',
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=50',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50',
-    ],
-    members: [
-      { id: 'sophie', name: 'Sophie Lee', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50' },
-      { id: 'marcus', name: 'Marcus Cole', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=50' },
-      { id: 'jamie', name: 'Jamie Chen', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50' },
-      { id: 'me', name: 'You', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50' },
-    ],
-  },
-};
-
-const mockMessages: Record<string, ChatMessage[]> = {
-  '1': [
-    {
-      id: '1',
-      senderId: 'alex',
-      senderName: 'Alex Rivera',
-      senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50',
-      text: 'Hey everyone! So excited for tonight 🎲',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      isCurrentUser: false,
-    },
-    {
-      id: '2',
-      senderId: 'sam',
-      senderName: 'Sam Kim',
-      senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50',
-      text: 'Same here! I\'m bringing Catan and Ticket to Ride',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1.5),
-      isCurrentUser: false,
-    },
-    {
-      id: '3',
-      senderId: 'me',
-      senderName: 'You',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
-      text: 'Perfect! I\'ll bring some snacks and drinks 🍕',
-      timestamp: new Date(Date.now() - 1000 * 60 * 45),
-      isCurrentUser: true,
-    },
-    {
-      id: '4',
-      senderId: 'jamie',
-      senderName: 'Jamie Chen',
-      senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50',
-      text: 'Can\'t wait for tonight! Who\'s bringing snacks?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5),
-      isCurrentUser: false,
-    },
-  ],
-  '2': [
-    {
-      id: '1',
-      senderId: 'alex',
-      senderName: 'Alex Rivera',
-      senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50',
-      text: 'Just finished the first draft of the script',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      isCurrentUser: false,
-    },
-    {
-      id: '2',
-      senderId: 'me',
-      senderName: 'You',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
-      text: 'Amazing! Can you share it so I can start on the storyboard?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 23),
-      isCurrentUser: true,
-    },
-    {
-      id: '3',
-      senderId: 'alex',
-      senderName: 'Alex Rivera',
-      senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50',
-      text: 'Script revisions are done. Can we meet tomorrow?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      isCurrentUser: false,
-    },
-  ],
-  '3': [
-    {
-      id: '1',
-      senderId: 'marcus',
-      senderName: 'Marcus Cole',
-      senderAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=50',
-      text: 'Weather looks perfect for tomorrow! ☀️',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-      isCurrentUser: false,
-    },
-    {
-      id: '2',
-      senderId: 'jamie',
-      senderName: 'Jamie Chen',
-      senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50',
-      text: 'What lenses are you all bringing?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 36),
-      isCurrentUser: false,
-    },
-    {
-      id: '3',
-      senderId: 'me',
-      senderName: 'You',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
-      text: 'I\'ve got my 50mm and 85mm ready!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30),
-      isCurrentUser: true,
-    },
-    {
-      id: '4',
-      senderId: 'sophie',
-      senderName: 'Sophie Lee',
-      senderAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50',
-      text: 'Here\'s the location pin 📍',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      isCurrentUser: false,
-    },
-  ],
-};
 
 interface PendingFile {
   file: File;
@@ -208,10 +29,10 @@ interface PendingFile {
   type: 'image' | 'file';
 }
 
-const ChatRoom = () => {
+const ChatRoomPage = () => {
   const { chatId } = useParams<{ chatId: string }>();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [room, setRoom] = useState<ChatRoomData | null>(null);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
@@ -223,13 +44,31 @@ const ChatRoom = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (chatId && mockChatRooms[chatId]) {
-      setRoom(mockChatRooms[chatId]);
-      setMessages(mockMessages[chatId] || []);
+    if (chatId) {
+      fetchChatData();
     }
   }, [chatId]);
+
+  const fetchChatData = async () => {
+    if (!chatId) return;
+    
+    setLoading(true);
+    try {
+      const chatRoom = await api.get<ChatRoomData>(`/api/chats/room/${chatId}?currentUserId=current-user-id`);
+      setRoom(chatRoom);
+      
+      const chatMessages = await api.get<Message[]>(`/api/chats/${chatRoom.id}/messages?currentUserId=current-user-id`);
+      setMessages(chatMessages);
+    } catch (error) {
+      toast.error('Failed to load chat');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -237,11 +76,12 @@ const ChatRoom = () => {
     }
   }, [messages]);
 
-  const formatMessageTime = (date: Date) => {
-    return format(date, 'h:mm a');
+  const formatMessageTime = (dateStr: string) => {
+    return format(new Date(dateStr), 'h:mm a');
   };
 
-  const formatDateHeader = (date: Date) => {
+  const formatDateHeader = (dateStr: string) => {
+    const date = new Date(dateStr);
     if (isToday(date)) return 'Today';
     if (isYesterday(date)) return 'Yesterday';
     return format(date, 'MMMM d, yyyy');
@@ -296,75 +136,29 @@ const ChatRoom = () => {
     });
   };
 
-  const uploadFiles = async (): Promise<Attachment[]> => {
-    const attachments: Attachment[] = [];
-
-    for (const pending of pendingFiles) {
-      const fileExt = pending.file.name.split('.').pop();
-      const fileName = `${chatId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-      const { data, error } = await supabase.storage
-        .from('chat-attachments')
-        .upload(fileName, pending.file);
-
-      if (error) {
-        console.error('Upload error:', error);
-        toast.error(`Failed to upload ${pending.file.name}`);
-        continue;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('chat-attachments')
-        .getPublicUrl(data.path);
-
-      attachments.push({
-        id: Date.now().toString() + Math.random().toString(36).substring(7),
-        url: urlData.publicUrl,
-        name: pending.file.name,
-        type: pending.type,
-        mimeType: pending.file.type,
-        size: pending.file.size,
-      });
-    }
-
-    return attachments;
-  };
-
   const handleSendMessage = async () => {
     if (!newMessage.trim() && pendingFiles.length === 0) return;
+    if (!room) return;
 
     setIsUploading(true);
 
     try {
-      let attachments: Attachment[] = [];
-      
-      if (pendingFiles.length > 0) {
-        attachments = await uploadFiles();
-        // Clean up previews
-        pendingFiles.forEach(p => {
-          if (p.preview) URL.revokeObjectURL(p.preview);
-        });
-        setPendingFiles([]);
-      }
-
-      const message: ChatMessage = {
-        id: Date.now().toString(),
-        senderId: 'me',
-        senderName: 'You',
-        senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
+      const request = {
         text: newMessage.trim(),
-        timestamp: new Date(),
-        isCurrentUser: true,
-        attachments: attachments.length > 0 ? attachments : undefined,
+        location: undefined,
       };
+
+      const message = await api.post<Message>(
+        `/api/chats/${room.id}/messages?senderId=current-user-id&senderName=You&senderAvatar=https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50`,
+        request
+      );
 
       setMessages(prev => [...prev, message]);
       setNewMessage('');
+      setPendingFiles([]);
       inputRef.current?.focus();
       
-      if (attachments.length > 0) {
-        toast.success(`Sent ${attachments.length} file${attachments.length > 1 ? 's' : ''}`);
-      }
+      toast.success('Message sent');
     } catch (error) {
       console.error('Send error:', error);
       toast.error('Failed to send message');
@@ -373,19 +167,25 @@ const ChatRoom = () => {
     }
   };
 
-  const handleSendLocation = (location: LocationData) => {
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      senderId: 'me',
-      senderName: 'You',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
-      text: '',
-      timestamp: new Date(),
-      isCurrentUser: true,
-      location,
-    };
-    setMessages(prev => [...prev, message]);
-    toast.success('Location shared!');
+  const handleSendLocation = async (location: LocationData) => {
+    if (!room) return;
+
+    try {
+      const request = {
+        text: '',
+        location,
+      };
+
+      const message = await api.post<Message>(
+        `/api/chats/${room.id}/messages?senderId=current-user-id&senderName=You&senderAvatar=https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50`,
+        request
+      );
+
+      setMessages(prev => [...prev, message]);
+      toast.success('Location shared!');
+    } catch (error) {
+      toast.error('Failed to share location');
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -396,19 +196,29 @@ const ChatRoom = () => {
   };
 
   const groupedMessages = messages.reduce((groups, message) => {
-    const dateKey = format(message.timestamp, 'yyyy-MM-dd');
+    const dateKey = format(new Date(message.createdAt), 'yyyy-MM-dd');
     if (!groups[dateKey]) {
       groups[dateKey] = [];
     }
     groups[dateKey].push(message);
     return groups;
-  }, {} as Record<string, ChatMessage[]>);
+  }, {} as Record<string, Message[]>);
+
+  if (loading) {
+    return (
+      <AppLayout showNav={false}>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground font-mono">LOADING...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!room) {
     return (
       <AppLayout showNav={false}>
         <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground font-mono">LOADING...</p>
+          <p className="text-muted-foreground font-mono">CHAT NOT FOUND</p>
         </div>
       </AppLayout>
     );
@@ -429,10 +239,10 @@ const ChatRoom = () => {
           </Button>
           
           <div className="relative w-10 h-10 shrink-0">
-            {room.avatars.slice(0, 2).map((avatar, i) => (
+            {room.memberAvatars.slice(0, 2).map((avatar, i) => (
               <img
                 key={i}
-                src={avatar}
+                src={avatar || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=50'}
                 alt=""
                 className={`absolute w-7 h-7 rounded-full border-2 border-background object-cover ${
                   i === 0 ? 'top-0 left-0 z-20' : 'top-1 left-3 z-10'
@@ -467,7 +277,6 @@ const ChatRoom = () => {
       }
     >
       <div className="flex flex-col h-[calc(100vh-60px)]">
-        {/* Messages area */}
         <ScrollArea ref={scrollRef} className="flex-1 px-4 py-3">
           <AnimatePresence>
             {Object.entries(groupedMessages).map(([dateKey, dateMessages]) => (
@@ -475,7 +284,7 @@ const ChatRoom = () => {
                 <div className="flex items-center justify-center my-4">
                   <div className="px-3 py-1 rounded-full bg-secondary/50 border border-vhs-green/20">
                     <span className="text-xs font-mono text-muted-foreground">
-                      {formatDateHeader(dateMessages[0].timestamp)}
+                      {formatDateHeader(dateMessages[0].createdAt)}
                     </span>
                   </div>
                 </div>
@@ -517,11 +326,10 @@ const ChatRoom = () => {
                           </span>
                         )}
                         
-                        {/* Attachments */}
                         {message.attachments && message.attachments.length > 0 && (
                           <div className={`flex flex-wrap gap-2 mb-1 ${message.isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                             {message.attachments.map((attachment) => (
-                              attachment.type === 'image' ? (
+                              attachment.type === 'IMAGE' ? (
                                 <motion.div
                                   key={attachment.id}
                                   whileHover={{ scale: 1.02 }}
@@ -533,11 +341,6 @@ const ChatRoom = () => {
                                     alt={attachment.name}
                                     className="max-w-[200px] max-h-[200px] rounded-lg border border-vhs-purple/30 object-cover"
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-lg opacity-0 hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
-                                    <span className="text-[10px] text-white font-mono truncate max-w-[180px] px-2">
-                                      {attachment.name}
-                                    </span>
-                                  </div>
                                 </motion.div>
                               ) : (
                                 <a
@@ -563,7 +366,6 @@ const ChatRoom = () => {
                           </div>
                         )}
 
-                        {/* Location bubble */}
                         {message.location && (
                           <a
                             href={`https://www.openstreetmap.org/?mlat=${message.location.lat}&mlon=${message.location.lng}#map=15/${message.location.lat}/${message.location.lng}`}
@@ -607,7 +409,7 @@ const ChatRoom = () => {
                         <span className={`text-[10px] text-muted-foreground mt-1 block ${
                           message.isCurrentUser ? 'text-right mr-1' : 'ml-1'
                         }`}>
-                          {formatMessageTime(message.timestamp)}
+                          {formatMessageTime(message.createdAt)}
                         </span>
                       </div>
 
@@ -630,7 +432,6 @@ const ChatRoom = () => {
           )}
         </ScrollArea>
 
-        {/* Pending files preview */}
         <AnimatePresence>
           {pendingFiles.length > 0 && (
             <motion.div
@@ -684,7 +485,6 @@ const ChatRoom = () => {
           )}
         </AnimatePresence>
 
-        {/* Message input */}
         <div className="p-3 border-t border-vhs-green/20 bg-background/95 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <input
@@ -755,14 +555,12 @@ const ChatRoom = () => {
         </div>
       </div>
 
-      {/* Member profile sheet */}
       <MemberProfileSheet
         member={selectedMember}
         open={!!selectedMember}
         onOpenChange={(open) => !open && setSelectedMember(null)}
       />
 
-      {/* Location picker */}
       <LocationPicker
         open={locationPickerOpen}
         onOpenChange={setLocationPickerOpen}
@@ -802,4 +600,4 @@ const ChatRoom = () => {
   );
 };
 
-export default ChatRoom;
+export default ChatRoomPage;

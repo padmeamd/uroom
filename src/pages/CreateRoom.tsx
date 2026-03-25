@@ -1,5 +1,5 @@
-import { AppLayout } from '@/components/layout/AppLayout';
 import { useState } from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,8 +10,19 @@ import { toast } from 'sonner';
 import { QuizBuilder } from '@/components/room/QuizBuilder';
 import { QuizQuestion } from '@/types/quiz';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '@/lib/api';
 
 type RoomType = 'EVENT' | 'PROJECT';
+
+interface CreateRoomFormData {
+  title: string;
+  description: string;
+  location: string;
+  dateTime: string;
+  maxMembers: number;
+  tags: string;
+  bannerUrl?: string;
+}
 
 const CreateRoom = () => {
   const [roomType, setRoomType] = useState<RoomType>('EVENT');
@@ -19,11 +30,84 @@ const CreateRoom = () => {
   const [quizRequired, setQuizRequired] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [inactivityKick, setInactivityKick] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<CreateRoomFormData>({
+    title: '',
+    description: '',
+    location: '',
+    dateTime: '',
+    maxMembers: 6,
+    tags: '',
+  });
 
-  const handleCreate = () => {
-    toast.success('Room created successfully! 🎉', {
-      description: 'Your room is now live and visible to others.',
-    });
+  const handleChange = (field: keyof CreateRoomFormData, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreate = async () => {
+    if (!formData.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+      
+      const roomData = {
+        title: formData.title,
+        roomType,
+        bannerUrl: formData.bannerUrl,
+        description: formData.description,
+        location: formData.location,
+        dateTime: formData.dateTime ? new Date(formData.dateTime).toISOString() : null,
+        maxMembers: formData.maxMembers,
+        tags,
+        isUrgent,
+        quizRequired,
+        autoAccept: roomType === 'EVENT',
+        inactivityTimeoutHours: inactivityKick ? 24 : null,
+        creatorId: 'current-user-id',
+        creatorName: 'Current User',
+        creatorAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400',
+      };
+
+      const room = await api.post<{ id: string }>('/api/rooms', roomData);
+      
+      if (quizRequired && quizQuestions.length > 0) {
+        for (const q of quizQuestions) {
+          await api.post('/api/rooms/' + room.id + '/quiz-questions', {
+            questionType: q.type,
+            question: q.question,
+            options: q.options,
+            required: q.required,
+            orderIndex: q.orderIndex,
+          });
+        }
+      }
+
+      toast.success('Room created successfully! 🎉', {
+        description: 'Your room is now live and visible to others.',
+      });
+      
+      setFormData({
+        title: '',
+        description: '',
+        location: '',
+        dateTime: '',
+        maxMembers: 6,
+        tags: '',
+      });
+      setQuizQuestions([]);
+      setIsUrgent(false);
+      setQuizRequired(false);
+      setInactivityKick(false);
+    } catch (error) {
+      toast.error('Failed to create room');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,14 +115,17 @@ const CreateRoom = () => {
       header={
         <div className="px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold text-foreground">Create Room</h1>
-          <Button onClick={handleCreate} className="btn-gradient px-4 py-2 text-sm">
-            Create
+          <Button 
+            onClick={handleCreate} 
+            className="btn-gradient px-4 py-2 text-sm"
+            disabled={loading}
+          >
+            {loading ? 'Creating...' : 'Create'}
           </Button>
         </div>
       }
     >
       <div className="px-4 pb-8 space-y-6">
-        {/* Room Type Selection */}
         <div className="space-y-2">
           <Label>Room Type</Label>
           <div className="grid grid-cols-2 gap-3">
@@ -73,7 +160,6 @@ const CreateRoom = () => {
           </div>
         </div>
 
-        {/* Banner Upload */}
         <div className="space-y-2">
           <Label>Banner Image</Label>
           <div className="h-32 rounded-xl border-2 border-dashed border-border bg-secondary flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/50 transition-colors">
@@ -82,17 +168,17 @@ const CreateRoom = () => {
           </div>
         </div>
 
-        {/* Title */}
         <div className="space-y-2">
           <Label htmlFor="title">Title</Label>
           <Input
             id="title"
             placeholder="Give your room an exciting name..."
             className="input-focus"
+            value={formData.title}
+            onChange={(e) => handleChange('title', e.target.value)}
           />
         </div>
 
-        {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
@@ -100,10 +186,11 @@ const CreateRoom = () => {
             placeholder="What's this room about? (max 200 chars)"
             maxLength={200}
             className="input-focus min-h-[80px]"
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
           />
         </div>
 
-        {/* Location & Date */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
@@ -113,6 +200,8 @@ const CreateRoom = () => {
                 id="location"
                 placeholder="Where?"
                 className="input-focus pl-9"
+                value={formData.location}
+                onChange={(e) => handleChange('location', e.target.value)}
               />
             </div>
           </div>
@@ -122,11 +211,12 @@ const CreateRoom = () => {
               id="datetime"
               type="datetime-local"
               className="input-focus"
+              value={formData.dateTime}
+              onChange={(e) => handleChange('dateTime', e.target.value)}
             />
           </div>
         </div>
 
-        {/* Max Members */}
         <div className="space-y-2">
           <Label htmlFor="maxMembers">Max Members</Label>
           <div className="relative">
@@ -136,24 +226,25 @@ const CreateRoom = () => {
               type="number"
               min={2}
               max={20}
-              defaultValue={6}
+              value={formData.maxMembers}
               className="input-focus pl-9"
+              onChange={(e) => handleChange('maxMembers', parseInt(e.target.value) || 6)}
             />
           </div>
         </div>
 
-        {/* Tags */}
         <div className="space-y-2">
           <Label htmlFor="tags">Tags</Label>
           <Input
             id="tags"
             placeholder="Film, Photography, Startup..."
             className="input-focus"
+            value={formData.tags}
+            onChange={(e) => handleChange('tags', e.target.value)}
           />
           <p className="text-xs text-muted-foreground">Separate with commas</p>
         </div>
 
-        {/* Urgent Toggle */}
         <div className="flex items-center justify-between p-4 rounded-xl bg-uroom-coral-light">
           <div className="flex items-center gap-3">
             <Zap size={20} className="text-uroom-coral" />
@@ -168,7 +259,6 @@ const CreateRoom = () => {
           />
         </div>
 
-        {/* Project-specific settings */}
         {roomType === 'PROJECT' && (
           <div className="space-y-4 p-4 rounded-xl bg-uroom-purple-light">
             <h3 className="font-medium text-foreground flex items-center gap-2">
@@ -176,7 +266,6 @@ const CreateRoom = () => {
               Project Settings
             </h3>
             
-            {/* Quiz Required */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -188,7 +277,6 @@ const CreateRoom = () => {
                   onCheckedChange={(checked) => {
                     setQuizRequired(checked);
                     if (checked && quizQuestions.length === 0) {
-                      // Add a default question when enabling
                       setQuizQuestions([{
                         id: crypto.randomUUID(),
                         type: 'text',
@@ -217,7 +305,6 @@ const CreateRoom = () => {
               </AnimatePresence>
             </div>
 
-            {/* Inactivity Kick */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-uroom-purple" />

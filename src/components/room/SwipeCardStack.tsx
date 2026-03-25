@@ -11,6 +11,7 @@ interface SwipeCardStackProps {
   onSwipeRight: (room: Room) => void;
   onUndo?: () => void;
   canUndo?: boolean;
+  loading?: boolean;
 }
 
 export function SwipeCardStack({
@@ -19,6 +20,7 @@ export function SwipeCardStack({
   onSwipeRight,
   onUndo,
   canUndo = false,
+  loading = false,
 }: SwipeCardStackProps) {
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -47,6 +49,22 @@ export function SwipeCardStack({
       onSwipeRight(currentRoom);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[500px] text-center px-8">
+        <div className="w-20 h-20 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center mb-4 shadow-neon-green animate-pulse">
+          <Tv size={32} className="text-primary animate-neon" />
+        </div>
+        <h3 className="text-xl font-display font-bold text-foreground mb-2">
+          ◈ LOADING...
+        </h3>
+        <p className="text-muted-foreground font-mono text-sm">
+          FETCHING ROOMS
+        </p>
+      </div>
+    );
+  }
 
   if (rooms.length === 0) {
     return (

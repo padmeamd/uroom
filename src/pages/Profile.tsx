@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { 
+import { useAuth } from '@/contexts/AuthContext';
+import {
   Settings, 
   Edit2, 
   MapPin, 
   Link as LinkIcon, 
-  Instagram, 
-  Github, 
+  Instagram,
+  Github,
   Linkedin,
   Camera,
   Calendar,
@@ -25,53 +26,54 @@ import {
   Heart
 } from 'lucide-react';
 
-const mockUser = {
-  id: 'current-user',
-  name: 'Taylor Morgan',
-  handle: 'taylor_m',
-  email: 'taylor@ucla.edu',
-  university: 'UCLA',
-  age: 21,
-  photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400',
-  interests: ['Film', 'Photography', 'Startups', 'AI', 'Music'],
-  skills: ['Video Editing', 'React', 'Python', 'UI Design', 'Storytelling'],
-  about: 'Film student passionate about visual storytelling. Looking to collaborate on creative projects and meet fellow creators! 🎬',
-  portfolioUrl: 'https://taylor.dev',
-  instagramUrl: '@taylor.creates',
-  githubUrl: 'taylorm',
-  linkedinUrl: 'taylormorgan',
-  level: 12,
-  xp: 2450,
-  xpToNext: 3000,
-  streak: 7,
-  joinedDate: 'Sept 2024',
-};
-
-const stats = [
-  { label: 'ROOMS', value: 12, icon: Users, color: 'primary' },
-  { label: 'EVENTS', value: 8, icon: Calendar, color: 'accent' },
-  { label: 'PROJECTS', value: 4, icon: Briefcase, color: 'primary' },
-];
-
-const achievements = [
-  { id: 1, icon: Trophy, label: 'First Room', unlocked: true },
-  { id: 2, icon: Flame, label: '7 Day Streak', unlocked: true },
-  { id: 3, icon: Star, label: 'Top Creator', unlocked: true },
-  { id: 4, icon: Heart, label: '50 Connections', unlocked: false },
-  { id: 5, icon: Zap, label: 'Speed Runner', unlocked: false },
-];
-
-const recentActivity = [
-  { id: 1, type: 'joined', room: 'Film Club Meetup', time: '2h ago' },
-  { id: 2, type: 'created', room: 'Short Film Project', time: '1d ago' },
-  { id: 3, type: 'completed', room: 'Photography Walk', time: '3d ago' },
-];
-
 const Profile = () => {
   const [activeTab, setActiveTab] = useState<'about' | 'activity' | 'achievements'>('about');
   const [isHovered, setIsHovered] = useState(false);
+  const { appUser: user, loading } = useAuth();
 
-  const xpPercentage = (mockUser.xp / mockUser.xpToNext) * 100;
+  const xpPercentage = user ? (user.xp / (user.level * 500)) * 100 : 0;
+
+  if (loading || !user) {
+    return (
+      <AppLayout
+        header={
+          <div className="px-4 py-3 flex items-center justify-between border-b border-primary/20">
+            <div className="flex items-center gap-2">
+              <Radio size={12} className="text-primary animate-neon" />
+              <h1 className="text-lg font-display font-bold text-foreground">◈ PROFILE</h1>
+            </div>
+            <Button variant="ghost" size="icon" className="hover:bg-accent/20 text-accent">
+              <Settings size={20} />
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex items-center justify-center h-[50vh]">
+          <p className="text-muted-foreground font-mono">LOADING...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const stats = [
+    { label: 'ROOMS', value: 12, icon: Users, color: 'primary' },
+    { label: 'EVENTS', value: 8, icon: Calendar, color: 'accent' },
+    { label: 'PROJECTS', value: 4, icon: Briefcase, color: 'primary' },
+  ];
+
+  const achievements = [
+    { id: 1, icon: Trophy, label: 'First Room', unlocked: true },
+    { id: 2, icon: Flame, label: '7 Day Streak', unlocked: true },
+    { id: 3, icon: Star, label: 'Top Creator', unlocked: true },
+    { id: 4, icon: Heart, label: '50 Connections', unlocked: false },
+    { id: 5, icon: Zap, label: 'Speed Runner', unlocked: false },
+  ];
+
+  const recentActivity = [
+    { id: 1, type: 'joined', room: 'Film Club Meetup', time: '2h ago' },
+    { id: 2, type: 'created', room: 'Short Film Project', time: '1d ago' },
+    { id: 3, type: 'completed', room: 'Photography Walk', time: '3d ago' },
+  ];
 
   return (
     <AppLayout
@@ -88,14 +90,12 @@ const Profile = () => {
       }
     >
       <div className="px-4 pb-8">
-        {/* Profile Header with VHS effect */}
         <motion.div 
           className="relative mb-6 pt-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Animated background glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
           
           <div 
@@ -103,7 +103,6 @@ const Profile = () => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {/* Animated ring */}
             <motion.div 
               className="absolute inset-0 rounded-lg border-2 border-primary"
               animate={{ 
@@ -114,24 +113,21 @@ const Profile = () => {
               transition={{ duration: 0.3 }}
             />
             
-            {/* Profile image with VHS scanlines */}
             <div className="relative w-full h-full rounded-lg overflow-hidden">
               <img
-                src={mockUser.photoUrl}
-                alt={mockUser.name}
+                src={user.photoUrl || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400'}
+                alt={user.name}
                 className="w-full h-full object-cover"
                 style={{ filter: 'saturate(1.2) contrast(1.1)' }}
               />
-              {/* Scanline overlay */}
               <div 
                 className="absolute inset-0 pointer-events-none opacity-30"
                 style={{
                   background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px)'
                 }}
               />
-              {/* Level badge */}
               <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded bg-primary text-primary-foreground flex items-center justify-center shadow-neon-green border-2 border-card">
-                <span className="font-mono font-bold text-sm">L{mockUser.level}</span>
+                <span className="font-mono font-bold text-sm">L{user.level}</span>
               </div>
             </div>
             
@@ -145,21 +141,18 @@ const Profile = () => {
           </div>
           
           <div className="text-center mt-4">
-            <h2 className="text-2xl font-display font-bold text-foreground glitch-text">{mockUser.name}</h2>
-            <p className="text-primary font-mono text-sm">@{mockUser.handle}</p>
+            <h2 className="text-2xl font-display font-bold text-foreground glitch-text">{user.name}</h2>
+            <p className="text-primary font-mono text-sm">@{user.name.toLowerCase().replace(/\s/g, '_')}</p>
             <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs mt-2 font-mono">
               <MapPin size={12} className="text-accent" />
-              <span>{mockUser.university}</span>
-              <span className="text-primary">•</span>
-              <span>SINCE {mockUser.joinedDate.toUpperCase()}</span>
+              <span>{user.university || 'University'}</span>
             </div>
           </div>
 
-          {/* XP Progress Bar */}
           <div className="mt-4 px-4">
             <div className="flex justify-between text-2xs font-mono text-muted-foreground mb-1">
-              <span>LEVEL {mockUser.level}</span>
-              <span>{mockUser.xp}/{mockUser.xpToNext} XP</span>
+              <span>LEVEL {user.level}</span>
+              <span>{user.xp}/{user.level * 500} XP</span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <motion.div 
@@ -172,14 +165,13 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Streak indicator */}
           <motion.div 
             className="flex items-center justify-center gap-2 mt-3"
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
             <Flame size={16} className="text-vhs-pink" />
-            <span className="text-sm font-mono font-bold text-vhs-pink">{mockUser.streak} DAY STREAK</span>
+            <span className="text-sm font-mono font-bold text-vhs-pink">{user.streak} DAY STREAK</span>
             <Flame size={16} className="text-vhs-pink" />
           </motion.div>
           
@@ -193,7 +185,6 @@ const Profile = () => {
           </Button>
         </motion.div>
 
-        {/* Stats with animation */}
         <motion.div 
           className="grid grid-cols-3 gap-3 mb-6"
           initial={{ opacity: 0, y: 20 }}
@@ -217,7 +208,6 @@ const Profile = () => {
           ))}
         </motion.div>
 
-        {/* Tab Navigation */}
         <div className="flex gap-2 mb-4 p-1 bg-muted/50 rounded-lg">
           {(['about', 'activity', 'achievements'] as const).map((tab) => (
             <button
@@ -234,7 +224,6 @@ const Profile = () => {
           ))}
         </div>
 
-        {/* Tab Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'about' && (
             <motion.div
@@ -245,20 +234,18 @@ const Profile = () => {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {/* About */}
               <div className="card-elevated p-4">
                 <h3 className="font-mono font-bold text-foreground mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                   <Sparkles size={14} className="text-accent" />
                   ABOUT
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{mockUser.about}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{user.about || 'No bio yet'}</p>
               </div>
 
-              {/* Interests */}
               <div className="card-elevated p-4">
                 <h3 className="font-mono font-bold text-foreground mb-3 text-sm uppercase tracking-wider">◈ INTERESTS</h3>
                 <div className="flex flex-wrap gap-2">
-                  {mockUser.interests.map((interest, i) => (
+                  {user.interests.map((interest, i) => (
                     <motion.span
                       key={interest}
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -273,11 +260,10 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Skills */}
               <div className="card-elevated p-4">
                 <h3 className="font-mono font-bold text-foreground mb-3 text-sm uppercase tracking-wider">◈ SKILLS</h3>
                 <div className="flex flex-wrap gap-2">
-                  {mockUser.skills.map((skill, i) => (
+                  {user.skills.map((skill, i) => (
                     <motion.span
                       key={skill}
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -292,19 +278,18 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Links */}
               <div className="card-elevated overflow-hidden">
                 <h3 className="font-mono font-bold text-foreground p-4 pb-2 text-sm uppercase tracking-wider">◈ LINKS</h3>
                 <div className="divide-y divide-border/50">
                   {[
-                    { icon: LinkIcon, url: mockUser.portfolioUrl, color: 'text-primary' },
-                    { icon: Instagram, url: mockUser.instagramUrl, color: 'text-vhs-pink' },
-                    { icon: Github, url: mockUser.githubUrl, color: 'text-foreground' },
-                    { icon: Linkedin, url: mockUser.linkedinUrl, color: 'text-vhs-cyan' },
+                    { icon: LinkIcon, url: user.portfolioUrl, color: 'text-primary' },
+                    { icon: Instagram, url: user.instagramUrl, color: 'text-vhs-pink' },
+                    { icon: Github, url: user.githubUrl, color: 'text-foreground' },
+                    { icon: Linkedin, url: user.linkedinUrl, color: 'text-vhs-cyan' },
                   ].filter(l => l.url).map(({ icon: Icon, url, color }, i) => (
                     <motion.a 
                       key={i}
-                      href="#" 
+                      href={url || '#'} 
                       className="flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-all group"
                       whileHover={{ x: 5 }}
                     >

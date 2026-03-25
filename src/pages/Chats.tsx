@@ -1,94 +1,79 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { MessageCircle, Users, Calendar, Briefcase } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
-
-interface Chat {
-  id: string;
-  roomTitle: string;
-  roomType: 'EVENT' | 'PROJECT';
-  lastMessage: string;
-  lastMessageTime: Date;
-  unreadCount: number;
-  memberCount: number;
-  avatars: string[];
-}
-
-const mockChats: Chat[] = [
-  {
-    id: '1',
-    roomTitle: 'Board Game Night 🎲',
-    roomType: 'EVENT',
-    lastMessage: 'Jamie: Can\'t wait for tonight! Who\'s bringing snacks?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 5),
-    unreadCount: 3,
-    memberCount: 4,
-    avatars: [
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50',
-    ],
-  },
-  {
-    id: '2',
-    roomTitle: 'Short Film: "The Last Lecture"',
-    roomType: 'PROJECT',
-    lastMessage: 'Alex: Script revisions are done. Can we meet tomorrow?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    unreadCount: 0,
-    memberCount: 2,
-    avatars: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50',
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50',
-    ],
-  },
-  {
-    id: '3',
-    roomTitle: 'Photography Walk: Golden Hour',
-    roomType: 'EVENT',
-    lastMessage: 'Sophie: Here\'s the location pin 📍',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    unreadCount: 1,
-    memberCount: 7,
-    avatars: [
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50',
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=50',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50',
-    ],
-  },
-];
+import { api } from '@/lib/api';
+import { ChatRoom } from '@/types/room';
+import { toast } from 'sonner';
 
 const Chats = () => {
   const navigate = useNavigate();
+  const [chats, setChats] = useState<ChatRoom[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const formatTime = (date: Date) => {
+  useEffect(() => {
+    fetchChats();
+  }, []);
+
+  const fetchChats = async () => {
+    setLoading(true);
+    try {
+      const rooms = await api.get<ChatRoom[]>('/api/rooms');
+      const roomsWithChats = rooms.filter(r => r.currentMembers > 0);
+      setChats(roomsWithChats);
+    } catch (error) {
+      toast.error('Failed to load chats');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
     if (isToday(date)) return format(date, 'h:mm a');
     if (isYesterday(date)) return 'Yesterday';
     return format(date, 'MMM d');
   };
+
+  if (loading) {
+    return (
+      <AppLayout
+        header={
+          <div className="px-4 py-3 flex items-center justify-between">
+            <h1 className="text-lg font-bold text-foreground">Chats</h1>
+          </div>
+        }
+      >
+        <div className="flex items-center justify-center py-20">
+          <p className="text-muted-foreground font-mono">LOADING...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout
       header={
         <div className="px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold text-foreground">Chats</h1>
-          <span className="text-sm text-muted-foreground">{mockChats.length} rooms</span>
+          <span className="text-sm text-muted-foreground">{chats.length} rooms</span>
         </div>
       }
     >
       <div className="divide-y divide-border">
-        {mockChats.map(chat => (
+        {chats.map(chat => (
           <div
             key={chat.id}
-            onClick={() => navigate(`/chats/${chat.id}`)}
+            onClick={() => navigate(`/chats/${chat.roomId}`)}
             className="px-4 py-3 flex gap-3 hover:bg-secondary/50 cursor-pointer transition-colors active:bg-vhs-green/10"
           >
-            {/* Avatar stack */}
             <div className="relative w-12 h-12 shrink-0">
-              {chat.avatars.slice(0, 3).map((avatar, i) => (
+              {chat.memberAvatars.slice(0, 3).map((avatar, i) => (
                 <img
                   key={i}
-                  src={avatar}
+                  src={avatar || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=50'}
                   alt=""
                   className={`absolute w-8 h-8 rounded-full border-2 border-background object-cover ${
                     i === 0 ? 'top-0 left-0 z-30' :
@@ -99,7 +84,6 @@ const Chats = () => {
               ))}
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 mb-1">
                 <div className="flex items-center gap-2 min-w-0">
@@ -113,19 +97,14 @@ const Chats = () => {
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {formatTime(chat.lastMessageTime)}
+                  {formatTime(chat.createdAt)}
                 </span>
               </div>
               
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm text-muted-foreground truncate">
-                  {chat.lastMessage}
+                  Click to view chat
                 </p>
-                {chat.unreadCount > 0 && (
-                  <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
-                    {chat.unreadCount}
-                  </span>
-                )}
               </div>
               
               <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
@@ -136,7 +115,7 @@ const Chats = () => {
           </div>
         ))}
 
-        {mockChats.length === 0 && (
+        {chats.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
             <div className="w-16 h-16 rounded-full bg-uroom-sky-light flex items-center justify-center mb-4">
               <MessageCircle size={28} className="text-primary" />
