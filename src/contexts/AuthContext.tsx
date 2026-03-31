@@ -1,101 +1,58 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { api } from '@/lib/api';
+import { api, tokenStorage } from '@/lib/api';
 import { User as AppUser } from '@/types/room';
 
+interface AuthResponse {
+  token: string;
+  user: AppUser;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   appUser: AppUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await fetchAppUser(session.user.id);
-      }
+    const token = tokenStorage.get();
+    if (token) {
+      api.get<AppUser>('/api/auth/me')
+        .then(setUser)
+        .catch(() => tokenStorage.remove())
+        .finally(() => setLoading(false));
+    } else {
       setLoading(false);
-    };
-
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchAppUser(session.user.id);
-      } else {
-        setAppUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
-  const fetchAppUser = async (supabaseId: string) => {
-    try {
-      const data = await api.get<AppUser>(`/api/users/supabase/${supabaseId}`);
-      setAppUser(data);
-    } catch (error) {
-      console.error('Failed to fetch app user:', error);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    if (data.user) {
-      setUser(data.user);
-      await fetchAppUser(data.user.id);
-    }
-  };
-
-  const signUp = async (email: string, password: string, name: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    if (error) throw error;
-    
-    if (data.user) {
-      try {
-        const newUser = await api.post<AppUser>('/api/users', { 
-          supabaseId: data.user.id,
-          name, 
-          email 
-        });
-        setAppUser(newUser);
-      } catch (err) {
-        console.error('Failed to create user in backend:', err);
-      }
-    }
+    const data = await api.post<AuthResponse>('/api/auth/login', { email, password });
+    tokenStorage.set(data.token);
     setUser(data.user);
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const signUp = async (email: string, password: string, name: string) => {
+    const data = await api.post<AuthResponse>('/api/auth/register', { name, email, password });
+    tokenStorage.set(data.token);
+    setUser(data.user);
+  };
+
+  const signOut = () => {
+    tokenStorage.remove();
     setUser(null);
-    setAppUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, appUser: user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
