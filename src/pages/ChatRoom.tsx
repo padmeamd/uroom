@@ -13,6 +13,7 @@ import { MemberProfileSheet } from '@/components/room/MemberProfileSheet';
 import { LocationPicker, type LocationData } from '@/components/room/LocationPicker';
 import { api } from '@/lib/api';
 import { ChatRoom as ChatRoomData, Message } from '@/types/room';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Attachment {
   id: string;
@@ -32,6 +33,7 @@ interface PendingFile {
 const ChatRoomPage = () => {
   const { chatId } = useParams<{ chatId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [room, setRoom] = useState<ChatRoomData | null>(null);
@@ -57,10 +59,10 @@ const ChatRoomPage = () => {
     
     setLoading(true);
     try {
-      const chatRoom = await api.get<ChatRoomData>(`/api/chats/room/${chatId}?currentUserId=current-user-id`);
+      const chatRoom = await api.get<ChatRoomData>(`/api/chats/room/${chatId}?currentUserId=${user!.id}`);
       setRoom(chatRoom);
-      
-      const chatMessages = await api.get<Message[]>(`/api/chats/${chatRoom.id}/messages?currentUserId=current-user-id`);
+
+      const chatMessages = await api.get<Message[]>(`/api/chats/${chatRoom.id}/messages?currentUserId=${user!.id}`);
       setMessages(chatMessages);
     } catch (error) {
       toast.error('Failed to load chat');
@@ -148,8 +150,10 @@ const ChatRoomPage = () => {
         location: undefined,
       };
 
+      const senderAvatar = encodeURIComponent(user!.photoUrl || '');
+      const senderName = encodeURIComponent(user!.name);
       const message = await api.post<Message>(
-        `/api/chats/${room.id}/messages?senderId=current-user-id&senderName=You&senderAvatar=https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50`,
+        `/api/chats/${room.id}/messages?senderId=${user!.id}&senderName=${senderName}&senderAvatar=${senderAvatar}`,
         request
       );
 
@@ -157,8 +161,6 @@ const ChatRoomPage = () => {
       setNewMessage('');
       setPendingFiles([]);
       inputRef.current?.focus();
-      
-      toast.success('Message sent');
     } catch (error) {
       console.error('Send error:', error);
       toast.error('Failed to send message');
@@ -176,8 +178,10 @@ const ChatRoomPage = () => {
         location,
       };
 
+      const senderAvatar = encodeURIComponent(user!.photoUrl || '');
+      const senderName = encodeURIComponent(user!.name);
       const message = await api.post<Message>(
-        `/api/chats/${room.id}/messages?senderId=current-user-id&senderName=You&senderAvatar=https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50`,
+        `/api/chats/${room.id}/messages?senderId=${user!.id}&senderName=${senderName}&senderAvatar=${senderAvatar}`,
         request
       );
 

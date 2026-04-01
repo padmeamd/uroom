@@ -26,10 +26,10 @@ async function request<T>(
 
   const response = await fetch(url, config);
 
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     tokenStorage.remove();
     window.location.href = '/login';
-    throw new Error('Unauthorized');
+    throw new Error('Session expired — please log in again');
   }
 
   if (!response.ok) {

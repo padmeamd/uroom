@@ -11,6 +11,7 @@ import { QuizBuilder } from '@/components/room/QuizBuilder';
 import { QuizQuestion } from '@/types/quiz';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 type RoomType = 'EVENT' | 'PROJECT';
 
@@ -25,6 +26,7 @@ interface CreateRoomFormData {
 }
 
 const CreateRoom = () => {
+  const { user } = useAuth();
   const [roomType, setRoomType] = useState<RoomType>('EVENT');
   const [isUrgent, setIsUrgent] = useState(false);
   const [quizRequired, setQuizRequired] = useState(false);
@@ -67,9 +69,9 @@ const CreateRoom = () => {
         quizRequired,
         autoAccept: roomType === 'EVENT',
         inactivityTimeoutHours: inactivityKick ? 24 : null,
-        creatorId: 'current-user-id',
-        creatorName: 'Current User',
-        creatorAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400',
+        creatorId: user!.id,
+        creatorName: user!.name,
+        creatorAvatar: user!.photoUrl || null,
       };
 
       const room = await api.post<{ id: string }>('/api/rooms', roomData);

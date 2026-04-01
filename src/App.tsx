@@ -12,6 +12,7 @@ import ChatRoom from "./pages/ChatRoom";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import SetupProfile from "./pages/SetupProfile";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,14 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route
+        path="/setup-profile"
+        element={
+          <ProtectedRoute>
+            <SetupProfile />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={

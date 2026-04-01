@@ -24,10 +24,11 @@ const Login = () => {
       if (isSignUp) {
         await signUp(email, password, name);
         toast.success('Account created successfully!');
+        navigate('/setup-profile');
       } else {
         await signIn(email, password);
+        navigate('/');
       }
-      navigate('/');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'An error occurred';
       toast.error(message);

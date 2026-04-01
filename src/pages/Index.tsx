@@ -6,8 +6,10 @@ import { SwipeCardStack } from '@/components/room/SwipeCardStack';
 import { Room, UrgentFilter } from '@/types/room';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  const { user } = useAuth();
   const [urgentFilter, setUrgentFilter] = useState<UrgentFilter>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'EVENT' | 'PROJECT'>('all');
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -56,14 +58,14 @@ const Index = () => {
     setRooms(prev => prev.slice(1));
     
     try {
-      await api.post(`/api/rooms/${room.id}/join?userId=current-user`, {});
-      
-      if (room.type === 'EVENT' && room.autoAccept) {
+      await api.post(`/api/rooms/${room.id}/join?userId=${user!.id}`, {});
+
+      if (room.roomType === 'EVENT' && room.autoAccept) {
         toast.success(`Joined "${room.title}"! 🎉`, {
           description: 'Check your chats to connect with the group.',
           duration: 3000,
         });
-      } else if (room.type === 'PROJECT' && room.quizRequired) {
+      } else if (room.roomType === 'PROJECT' && room.quizRequired) {
         toast('Application Required', {
           description: `Complete the quiz to join "${room.title}"`,
           action: {
