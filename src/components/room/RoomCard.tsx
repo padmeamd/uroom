@@ -21,7 +21,7 @@ export function RoomCard({ room, isInteractive = true, onClick }: RoomCardProps)
     return format(date, 'MMM d, h:mm a');
   };
 
-  const isStartingSoon = differenceInDays(room.dateTime, new Date()) <= 1;
+  const isStartingSoon = room.dateTime ? differenceInDays(new Date(room.dateTime), new Date()) <= 1 : false;
 
   return (
     <div
@@ -51,7 +51,7 @@ export function RoomCard({ room, isInteractive = true, onClick }: RoomCardProps)
         
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-          <RoomTypeBadge type={room.type} size="sm" />
+          <RoomTypeBadge type={room.roomType} size="sm" />
           {room.isUrgent && <UrgentBadge size="sm" variant="urgent" />}
           {!room.isUrgent && isStartingSoon && (
             <UrgentBadge size="sm" variant="soon" />
@@ -75,7 +75,7 @@ export function RoomCard({ room, isInteractive = true, onClick }: RoomCardProps)
             <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-primary animate-neon" />
           </div>
           <span className="text-foreground text-sm font-mono font-medium drop-shadow-md">
-            @{room.creatorName.toLowerCase().replace(' ', '_')}
+            @{room.creatorName?.toLowerCase().replace(' ', '_') ?? 'unknown'}
           </span>
         </div>
       </div>
@@ -95,7 +95,7 @@ export function RoomCard({ room, isInteractive = true, onClick }: RoomCardProps)
           </div>
           <div className="flex items-center gap-2">
             <Calendar size={14} className="text-accent shrink-0" />
-            <span className="vhs-timestamp">{formatDateTime(room.dateTime)}</span>
+            <span className="vhs-timestamp">{room.dateTime ? formatDateTime(new Date(room.dateTime)) : '—'}</span>
           </div>
         </div>
 
@@ -112,7 +112,7 @@ export function RoomCard({ room, isInteractive = true, onClick }: RoomCardProps)
         </div>
 
         {/* Role Requirements (for projects) */}
-        {room.type === 'PROJECT' && room.roleRequirements.length > 0 && (
+        {room.roomType === 'PROJECT' && (room as any).roleRequirements?.length > 0 && (
           <div className="pt-1">
             <p className="text-2xs text-accent font-mono uppercase tracking-wider mb-1.5">◈ ROLES NEEDED:</p>
             <RoleProgress roles={room.roleRequirements} compact />

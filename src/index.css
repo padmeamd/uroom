@@ -107,6 +107,58 @@
   .dark {
     /* Same as root - VHS is inherently dark */
   }
+
+  .light {
+    --background: 0 0% 97%;
+    --foreground: 270 25% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 270 25% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 25% 12%;
+
+    --primary: 150 70% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 20% 88%;
+    --secondary-foreground: 270 25% 15%;
+
+    --muted: 270 10% 92%;
+    --muted-foreground: 270 15% 45%;
+
+    --accent: 280 75% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 340 90% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 20% 84%;
+    --input: 270 20% 89%;
+    --ring: 150 70% 32%;
+
+    --vhs-green: 150 70% 32%;
+    --vhs-green-glow: 150 70% 45%;
+    --vhs-green-dark: 150 60% 22%;
+    --vhs-purple: 280 75% 52%;
+    --vhs-purple-glow: 280 75% 62%;
+    --vhs-purple-dark: 280 50% 38%;
+    --vhs-pink: 320 85% 50%;
+    --vhs-cyan: 180 75% 38%;
+    --vhs-yellow: 55 90% 42%;
+
+    --sidebar-background: 270 15% 94%;
+    --sidebar-foreground: 270 25% 12%;
+    --sidebar-primary: 150 70% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 20% 86%;
+    --sidebar-accent-foreground: 270 25% 12%;
+    --sidebar-border: 270 20% 84%;
+    --sidebar-ring: 150 70% 32%;
+
+    --shadow-card: 0 4px 30px -2px hsl(280 75% 52% / 0.15), 0 0 20px hsl(150 70% 32% / 0.08);
+    --shadow-card-hover: 0 8px 40px -4px hsl(280 75% 52% / 0.25), 0 0 30px hsl(150 70% 32% / 0.12);
+  }
 }
 
 @layer base {
