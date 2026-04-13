@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -40,6 +40,8 @@ const Profile = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Edit form state
   const [editName, setEditName] = useState('');
@@ -104,6 +106,21 @@ const Profile = () => {
 
   const removeTag = (tag: string, list: string[], setList: (v: string[]) => void) =>
     setList(list.filter(t => t !== tag));
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const result = await api.upload<{ id: string; url: string }>('/api/images', file);
+      setEditPhotoUrl(result.url);
+    } catch {
+      toast.error('Failed to upload photo');
+    } finally {
+      setPhotoUploading(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -231,6 +248,7 @@ const Profile = () => {
               className="absolute top-0 right-0 w-8 h-8 rounded bg-accent text-accent-foreground flex items-center justify-center shadow-neon-purple"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
+              onClick={openEdit}
             >
               <Camera size={14} />
             </motion.button>
@@ -470,15 +488,31 @@ const Profile = () => {
           </SheetHeader>
 
           <div className="space-y-5 pb-8">
-            {/* Photo URL */}
+            {/* Photo Upload */}
             <div>
-              <label className="text-2xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5 block">Photo URL</label>
-              <Input
-                value={editPhotoUrl}
-                onChange={e => setEditPhotoUrl(e.target.value)}
-                placeholder="https://..."
-                className="font-mono text-sm"
-              />
+              <label className="text-2xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5 block">Profile Photo</label>
+              <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoUploading}
+                className="flex items-center gap-3 w-full p-3 rounded-lg border border-dashed border-primary/30 hover:border-primary/60 bg-muted/30 transition-colors"
+              >
+                {editPhotoUrl ? (
+                  <img src={editPhotoUrl} alt="" className="w-12 h-12 rounded-lg object-cover border-2 border-primary/40 shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0">
+                    {photoUploading ? <Loader2 size={18} className="animate-spin text-primary" /> : <Camera size={18} className="text-muted-foreground" />}
+                  </div>
+                )}
+                <div className="text-left">
+                  <p className="text-xs font-mono text-foreground">
+                    {photoUploading ? 'Uploading...' : editPhotoUrl ? 'Click to change' : 'Click to upload'}
+                  </p>
+                  <p className="text-xs font-mono text-muted-foreground">JPG, PNG, WEBP — max 5 MB</p>
+                </div>
+                <Camera size={14} className="ml-auto text-muted-foreground shrink-0" />
+              </button>
             </div>
 
             {/* Name */}

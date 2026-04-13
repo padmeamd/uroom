@@ -61,4 +61,27 @@ export const api = {
 
   delete: (endpoint: string) =>
     request<void>(endpoint, { method: 'DELETE' }),
+
+  upload: <T>(endpoint: string, file: File): Promise<T> => {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const token = tokenStorage.get();
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(url, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    }).then(async (response) => {
+      if (response.status === 401 || response.status === 403) {
+        tokenStorage.remove();
+        window.location.href = '/login';
+        throw new Error('Session expired — please log in again');
+      }
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || `HTTP ${response.status}`);
+      }
+      return response.json() as Promise<T>;
+    });
+  },
 };
