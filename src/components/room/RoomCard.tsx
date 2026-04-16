@@ -1,5 +1,5 @@
 import { Room } from '@/types/room';
-import { RoomTypeBadge, UrgentBadge } from '@/components/ui/RoomTypeBadge';
+import { RoomTypeBadge, UrgentBadge, WrappedUpBadge } from '@/components/ui/RoomTypeBadge';
 import { MemberCount } from '@/components/ui/MemberCount';
 import { RoleProgress } from '@/components/ui/RoleProgress';
 import { AIRecommendation } from '@/components/ui/AIRecommendation';
@@ -21,7 +21,10 @@ export function RoomCard({ room, isInteractive = true, onClick }: RoomCardProps)
     return format(date, 'MMM d, h:mm a');
   };
 
-  const isStartingSoon = room.dateTime ? differenceInDays(new Date(room.dateTime), new Date()) <= 1 : false;
+  const now = new Date();
+  const eventDate = room.dateTime ? new Date(room.dateTime) : null;
+  const isWrappedUp = room.roomType === 'EVENT' && eventDate !== null && eventDate < now;
+  const isStartingSoon = !isWrappedUp && eventDate !== null && differenceInDays(eventDate, now) <= 1;
 
   return (
     <div
@@ -52,8 +55,9 @@ export function RoomCard({ room, isInteractive = true, onClick }: RoomCardProps)
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
           <RoomTypeBadge type={room.roomType} size="sm" />
-          {room.isUrgent && <UrgentBadge size="sm" variant="urgent" />}
-          {!room.isUrgent && isStartingSoon && (
+          {isWrappedUp && <WrappedUpBadge size="sm" />}
+          {!isWrappedUp && room.isUrgent && <UrgentBadge size="sm" variant="urgent" />}
+          {!isWrappedUp && !room.isUrgent && isStartingSoon && (
             <UrgentBadge size="sm" variant="soon" />
           )}
         </div>

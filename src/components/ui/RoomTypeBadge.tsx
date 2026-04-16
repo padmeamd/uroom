@@ -1,5 +1,5 @@
 import { RoomType } from '@/types/room';
-import { Calendar, Briefcase, Zap, Clock } from 'lucide-react';
+import { Calendar, Briefcase, Zap, Clock, CheckCheck } from 'lucide-react';
 
 interface RoomTypeBadgeProps {
   type: RoomType;
@@ -19,6 +19,23 @@ export function RoomTypeBadge({ type, size = 'md' }: RoomTypeBadgeProps) {
     >
       {isEvent ? <Calendar size={iconSize} /> : <Briefcase size={iconSize} />}
       {type}
+    </span>
+  );
+}
+
+interface WrappedUpBadgeProps {
+  size?: 'sm' | 'md';
+}
+
+export function WrappedUpBadge({ size = 'md' }: WrappedUpBadgeProps) {
+  const sizeClasses = size === 'sm' ? 'text-2xs px-2 py-0.5' : 'text-xs px-3 py-1';
+  const iconSize = size === 'sm' ? 10 : 12;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 font-mono font-bold uppercase tracking-widest rounded ${sizeClasses} bg-muted text-muted-foreground border border-border`}
+    >
+      <CheckCheck size={iconSize} />
+      WRAPPED UP
     </span>
   );
 }
