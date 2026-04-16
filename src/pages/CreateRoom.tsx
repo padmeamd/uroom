@@ -40,7 +40,7 @@ const CreateRoom = () => {
     description: '',
     location: '',
     dateTime: '',
-    maxMembers: 6,
+    maxMembers: undefined as unknown as number,
     tags: '',
   });
 
@@ -114,7 +114,7 @@ const CreateRoom = () => {
         description: '',
         location: '',
         dateTime: '',
-        maxMembers: 6,
+        maxMembers: undefined as unknown as number,
         tags: '',
       });
       setQuizQuestions([]);
@@ -292,9 +292,9 @@ const CreateRoom = () => {
               type="number"
               min={2}
               max={20}
-              value={formData.maxMembers}
+              value={formData.maxMembers ?? ''}
               className="input-focus pl-9"
-              onChange={(e) => handleChange('maxMembers', parseInt(e.target.value) || 6)}
+              onChange={(e) => handleChange('maxMembers', e.target.value === '' ? undefined as unknown as number : parseInt(e.target.value))}
             />
           </div>
         </div>
