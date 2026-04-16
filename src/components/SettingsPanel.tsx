@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Moon, Sun, LogOut, Radio, Bell, BellOff } from 'lucide-react';
+import { X, Moon, Sun, LogOut, Radio, Bell, BellOff, Trash2, AlertTriangle } from 'lucide-react';
 import { useTheme, Theme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
 
 interface SettingsPanelProps {
@@ -12,11 +13,13 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const { theme, setTheme } = useTheme();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<boolean>(() => {
     return localStorage.getItem('notifications') !== 'false';
   });
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const toggleNotifications = (val: boolean) => {
     setNotifications(val);
@@ -24,7 +27,10 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setConfirmDelete(false);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -34,6 +40,19 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     onClose();
     await signOut();
     navigate('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/api/users/${user.id}`);
+      signOut();
+      navigate('/login');
+    } catch {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
   };
 
   const themes: { value: Theme; label: string; icon: React.ReactNode }[] = [
@@ -131,18 +150,69 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                   ))}
                 </div>
               </section>
+
+              {/* Account */}
+              <section className="space-y-3">
+                <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Account</p>
+
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border text-foreground hover:bg-muted/50 transition-colors font-mono text-sm"
+                >
+                  <LogOut size={16} />
+                  SIGN OUT
+                </button>
+
+                <AnimatePresence mode="wait">
+                  {confirmDelete ? (
+                    <motion.div
+                      key="confirm"
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="rounded-xl border-2 border-destructive/50 bg-destructive/10 p-4 space-y-3"
+                    >
+                      <div className="flex items-center gap-2 text-destructive">
+                        <AlertTriangle size={15} />
+                        <span className="font-mono text-xs font-bold">DELETE ACCOUNT?</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono leading-relaxed">
+                        This is permanent. All your data, rooms, and history will be removed.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setConfirmDelete(false)}
+                          disabled={deleting}
+                          className="py-2 rounded-lg border border-border bg-muted/30 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          CANCEL
+                        </button>
+                        <button
+                          onClick={handleDeleteAccount}
+                          disabled={deleting}
+                          className="py-2 rounded-lg bg-destructive text-destructive-foreground font-mono text-xs font-bold hover:bg-destructive/90 transition-colors disabled:opacity-60"
+                        >
+                          {deleting ? 'DELETING...' : 'YES, DELETE'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      key="delete-btn"
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      onClick={() => setConfirmDelete(true)}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors font-mono text-sm"
+                    >
+                      <Trash2 size={16} />
+                      DELETE ACCOUNT
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </section>
             </div>
 
-            {/* Footer */}
-            <div className="px-5 py-4 border-t border-border">
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors font-mono text-sm"
-              >
-                <LogOut size={16} />
-                SIGN OUT
-              </button>
-            </div>
           </motion.div>
         </>
       )}

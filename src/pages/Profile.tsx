@@ -188,7 +188,7 @@ const Profile = () => {
             <Radio size={12} className="text-primary animate-neon" />
             <h1 className="text-lg font-display font-bold text-foreground">◈ PROFILE</h1>
           </div>
-          <Button variant="ghost" size="icon" className="hover:bg-accent/20 text-accent">
+          <Button variant="ghost" size="icon" className="hover:bg-accent/20 text-accent" onClick={() => setSettingsOpen(true)}>
             <Settings size={20} />
           </Button>
         </div>

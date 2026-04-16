@@ -158,6 +158,25 @@
 
     --shadow-card: 0 4px 30px -2px hsl(280 75% 52% / 0.15), 0 0 20px hsl(150 70% 32% / 0.08);
     --shadow-card-hover: 0 8px 40px -4px hsl(280 75% 52% / 0.25), 0 0 30px hsl(150 70% 32% / 0.12);
+
+    /* Light-mode gradients */
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 97%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(270 10% 97%) 100%);
+    --gradient-vhs: linear-gradient(180deg, transparent 0%, hsl(0 0% 0% / 0.008) 50%, transparent 100%);
+    --gradient-urgent: linear-gradient(135deg, hsl(340 90% 50%) 0%, hsl(320 85% 50%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(150 70% 32%) 0%, hsl(180 75% 38%) 100%);
+    --gradient-purple: linear-gradient(135deg, hsl(280 75% 52%) 0%, hsl(320 85% 50%) 100%);
+
+    /* Light-mode glows — muted so they don't clash with a white background */
+    --glow-green: 0 0 10px hsl(150 70% 32% / 0.25), 0 0 20px hsl(150 70% 32% / 0.12);
+    --glow-purple: 0 0 10px hsl(280 75% 52% / 0.25), 0 0 20px hsl(280 75% 52% / 0.12);
+    --glow-text: 0 0 4px currentColor;
+
+    /* Light-mode shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(270 20% 30% / 0.08);
+    --shadow-md: 0 4px 6px -1px hsl(270 20% 30% / 0.12), 0 2px 4px -2px hsl(270 20% 30% / 0.08);
+    --shadow-lg: 0 10px 15px -3px hsl(270 20% 30% / 0.12), 0 4px 6px -4px hsl(270 20% 30% / 0.08);
+    --shadow-xl: 0 20px 25px -5px hsl(270 20% 30% / 0.12), 0 8px 10px -6px hsl(270 20% 30% / 0.08);
   }
 }
 
@@ -208,6 +227,21 @@
     z-index: 9998;
     animation: vhs-flicker 0.15s infinite;
     opacity: 0.02;
+  }
+
+  /* Light mode: swap scanlines to subtle grey, hide flicker */
+  .light body::before {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsl(0 0% 0% / 0.012) 2px,
+      hsl(0 0% 0% / 0.012) 4px
+    );
+  }
+
+  .light body::after {
+    display: none;
   }
 }
 
@@ -278,7 +312,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      hsl(150 100% 50% / 0.1),
+      hsl(var(--vhs-green) / 0.08),
       transparent
     );
     transition: left 0.5s ease;
@@ -323,7 +357,7 @@
 
   .badge-project {
     background: hsl(var(--accent));
-    @apply text-white font-mono uppercase tracking-wider;
+    @apply text-accent-foreground font-mono uppercase tracking-wider;
     box-shadow: var(--glow-purple);
     animation: neon-pulse 2s ease-in-out infinite;
     animation-delay: 0.5s;
@@ -331,7 +365,7 @@
 
   .badge-urgent {
     background: var(--gradient-urgent);
-    @apply text-white font-mono uppercase tracking-wider;
+    @apply text-destructive-foreground font-mono uppercase tracking-wider;
     animation: vhs-glitch 3s ease-in-out infinite;
   }
 
@@ -408,7 +442,7 @@
 
   .btn-gradient:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 0 30px hsl(150 100% 50% / 0.5), 0 0 60px hsl(150 100% 50% / 0.3);
+    box-shadow: 0 0 30px hsl(var(--vhs-green) / 0.5), 0 0 60px hsl(var(--vhs-green) / 0.3);
   }
 
   .btn-gradient:hover::before {
@@ -423,7 +457,7 @@
 
   .btn-purple:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 0 30px hsl(280 100% 65% / 0.5), 0 0 60px hsl(280 100% 65% / 0.3);
+    box-shadow: 0 0 30px hsl(var(--vhs-purple) / 0.5), 0 0 60px hsl(var(--vhs-purple) / 0.3);
   }
 
   /* Input focus styles */
