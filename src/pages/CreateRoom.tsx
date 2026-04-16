@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, Briefcase, MapPin, Users, Clock, ImagePlus, Zap } from 'lucide-react';
+import { Calendar, Briefcase, MapPin, Users, Clock, ImagePlus, Zap, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { QuizBuilder } from '@/components/room/QuizBuilder';
 import { QuizQuestion } from '@/types/quiz';
@@ -33,6 +33,8 @@ const CreateRoom = () => {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [inactivityKick, setInactivityKick] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<CreateRoomFormData>({
     title: '',
     description: '',
@@ -46,6 +48,21 @@ const CreateRoom = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBannerUploading(true);
+    try {
+      const result = await api.upload<{ id: string; url: string }>('/api/images', file);
+      setFormData(prev => ({ ...prev, bannerUrl: result.url }));
+    } catch {
+      toast.error('Failed to upload banner image');
+    } finally {
+      setBannerUploading(false);
+      if (bannerInputRef.current) bannerInputRef.current.value = '';
+    }
+  };
+
   const handleCreate = async () => {
     if (!formData.title.trim()) {
       toast.error('Title is required');
@@ -55,7 +72,7 @@ const CreateRoom = () => {
     setLoading(true);
     try {
       const tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
-      
+
       const roomData = {
         title: formData.title,
         roomType,
@@ -75,7 +92,7 @@ const CreateRoom = () => {
       };
 
       const room = await api.post<{ id: string }>('/api/rooms', roomData);
-      
+
       if (quizRequired && quizQuestions.length > 0) {
         for (const q of quizQuestions) {
           await api.post('/api/rooms/' + room.id + '/quiz-questions', {
@@ -91,7 +108,7 @@ const CreateRoom = () => {
       toast.success('Room created successfully! 🎉', {
         description: 'Your room is now live and visible to others.',
       });
-      
+
       setFormData({
         title: '',
         description: '',
@@ -117,8 +134,8 @@ const CreateRoom = () => {
       header={
         <div className="px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold text-foreground">Create Room</h1>
-          <Button 
-            onClick={handleCreate} 
+          <Button
+            onClick={handleCreate}
             className="btn-gradient px-4 py-2 text-sm"
             disabled={loading}
           >
@@ -128,6 +145,7 @@ const CreateRoom = () => {
       }
     >
       <div className="px-4 pb-8 space-y-6">
+        {/* Room Type */}
         <div className="space-y-2">
           <Label>Room Type</Label>
           <div className="grid grid-cols-2 gap-3">
@@ -135,41 +153,84 @@ const CreateRoom = () => {
               onClick={() => setRoomType('EVENT')}
               className={`p-4 rounded-xl border-2 transition-all ${
                 roomType === 'EVENT'
-                  ? 'border-primary bg-uroom-sky-light'
+                  ? 'border-primary bg-primary/10'
                   : 'border-border bg-card hover:border-primary/50'
               }`}
             >
               <Calendar size={24} className={`mb-2 ${roomType === 'EVENT' ? 'text-primary' : 'text-muted-foreground'}`} />
               <h3 className="font-semibold text-foreground">Event</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Casual activities, meetups, hangouts
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Casual activities, meetups, hangouts</p>
             </button>
             <button
               onClick={() => setRoomType('PROJECT')}
               className={`p-4 rounded-xl border-2 transition-all ${
                 roomType === 'PROJECT'
-                  ? 'border-uroom-purple bg-uroom-purple-light'
-                  : 'border-border bg-card hover:border-uroom-purple/50'
+                  ? 'border-accent bg-accent/10'
+                  : 'border-border bg-card hover:border-accent/50'
               }`}
             >
-              <Briefcase size={24} className={`mb-2 ${roomType === 'PROJECT' ? 'text-uroom-purple' : 'text-muted-foreground'}`} />
+              <Briefcase size={24} className={`mb-2 ${roomType === 'PROJECT' ? 'text-accent' : 'text-muted-foreground'}`} />
               <h3 className="font-semibold text-foreground">Project</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Collaborations, films, startups
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Collaborations, films, startups</p>
             </button>
           </div>
         </div>
 
+        {/* Banner Image */}
         <div className="space-y-2">
           <Label>Banner Image</Label>
-          <div className="h-32 rounded-xl border-2 border-dashed border-border bg-secondary flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/50 transition-colors">
-            <ImagePlus size={24} className="text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Click to upload</span>
-          </div>
+          <input
+            ref={bannerInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleBannerSelect}
+          />
+          {formData.bannerUrl ? (
+            <div className="relative h-32 rounded-xl overflow-hidden border border-border">
+              <img
+                src={formData.bannerUrl}
+                alt="Banner"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3 opacity-0 hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-lg bg-white/90 text-black text-xs font-mono font-bold"
+                >
+                  Change
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, bannerUrl: undefined }))}
+                  className="w-8 h-8 rounded-lg bg-white/90 flex items-center justify-center"
+                >
+                  <X size={14} className="text-black" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => bannerInputRef.current?.click()}
+              disabled={bannerUploading}
+              className="w-full h-32 rounded-xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+            >
+              {bannerUploading ? (
+                <Loader2 size={24} className="text-muted-foreground animate-spin" />
+              ) : (
+                <ImagePlus size={24} className="text-muted-foreground" />
+              )}
+              <span className="text-sm text-muted-foreground font-mono">
+                {bannerUploading ? 'UPLOADING...' : 'CLICK TO UPLOAD'}
+              </span>
+              <span className="text-xs text-muted-foreground/60 font-mono">JPG, PNG, WEBP — max 5 MB</span>
+            </button>
+          )}
         </div>
 
+        {/* Title */}
         <div className="space-y-2">
           <Label htmlFor="title">Title</Label>
           <Input
@@ -181,6 +242,7 @@ const CreateRoom = () => {
           />
         </div>
 
+        {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
@@ -193,6 +255,7 @@ const CreateRoom = () => {
           />
         </div>
 
+        {/* Location + Date */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
@@ -219,6 +282,7 @@ const CreateRoom = () => {
           </div>
         </div>
 
+        {/* Max Members */}
         <div className="space-y-2">
           <Label htmlFor="maxMembers">Max Members</Label>
           <div className="relative">
@@ -235,6 +299,7 @@ const CreateRoom = () => {
           </div>
         </div>
 
+        {/* Tags */}
         <div className="space-y-2">
           <Label htmlFor="tags">Tags</Label>
           <Input
@@ -247,27 +312,26 @@ const CreateRoom = () => {
           <p className="text-xs text-muted-foreground">Separate with commas</p>
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl bg-uroom-coral-light">
+        {/* Urgent toggle */}
+        <div className="flex items-center justify-between p-4 rounded-xl bg-destructive/10">
           <div className="flex items-center gap-3">
-            <Zap size={20} className="text-uroom-coral" />
+            <Zap size={20} className="text-destructive" />
             <div>
               <h3 className="font-medium text-foreground">Mark as Urgent</h3>
               <p className="text-xs text-muted-foreground">Priority boost in recommendations</p>
             </div>
           </div>
-          <Switch
-            checked={isUrgent}
-            onCheckedChange={setIsUrgent}
-          />
+          <Switch checked={isUrgent} onCheckedChange={setIsUrgent} />
         </div>
 
+        {/* Project settings */}
         {roomType === 'PROJECT' && (
-          <div className="space-y-4 p-4 rounded-xl bg-uroom-purple-light">
+          <div className="space-y-4 p-4 rounded-xl bg-accent/10">
             <h3 className="font-medium text-foreground flex items-center gap-2">
-              <Briefcase size={16} className="text-uroom-purple" />
+              <Briefcase size={16} className="text-accent" />
               Project Settings
             </h3>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -289,7 +353,7 @@ const CreateRoom = () => {
                   }}
                 />
               </div>
-              
+
               <AnimatePresence>
                 {quizRequired && (
                   <motion.div
@@ -298,10 +362,7 @@ const CreateRoom = () => {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <QuizBuilder
-                      questions={quizQuestions}
-                      onChange={setQuizQuestions}
-                    />
+                    <QuizBuilder questions={quizQuestions} onChange={setQuizQuestions} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -309,16 +370,13 @@ const CreateRoom = () => {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock size={16} className="text-uroom-purple" />
+                <Clock size={16} className="text-accent" />
                 <div>
                   <p className="font-medium text-sm text-foreground">Kick Inactive Members</p>
                   <p className="text-xs text-muted-foreground">Remove if no message in 24h</p>
                 </div>
               </div>
-              <Switch
-                checked={inactivityKick}
-                onCheckedChange={setInactivityKick}
-              />
+              <Switch checked={inactivityKick} onCheckedChange={setInactivityKick} />
             </div>
           </div>
         )}
