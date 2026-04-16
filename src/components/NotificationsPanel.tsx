@@ -24,6 +24,9 @@ const TYPE_ICON: Record<string, string> = {
   JOIN_ACCEPTED: '✅',
   JOIN_REJECTED: '❌',
   KICKED: '🚫',
+  ADDED_TO_CHAT: '💬',
+  NEW_MESSAGE: '✉️',
+  TAGGED_IN_CHAT: '🏷️',
 };
 
 interface NotificationsPanelProps {

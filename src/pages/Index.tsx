@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Header } from '@/components/layout/Header';
+import { NotificationsPanel } from '@/components/NotificationsPanel';
 import { FilterBar } from '@/components/room/FilterBar';
 import { SwipeCardStack } from '@/components/room/SwipeCardStack';
 import { Room, UrgentFilter } from '@/types/room';
@@ -15,6 +16,8 @@ const Index = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [swipedRooms, setSwipedRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     fetchRooms();
@@ -95,7 +98,17 @@ const Index = () => {
   }, [swipedRooms]);
 
   return (
-    <AppLayout header={<Header />}>
+    <AppLayout header={
+      <Header
+        onBellClick={() => setNotificationsOpen(true)}
+        unreadCount={unreadCount}
+      />
+    }>
+      <NotificationsPanel
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        onUnreadChange={setUnreadCount}
+      />
       <div className="px-4 pt-4 pb-6">
         <div className="mb-4">
           <h2 className="text-xl font-display font-bold text-foreground glitch-text">
