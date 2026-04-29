@@ -86,4 +86,21 @@ export interface ChatRoom {
   createdAt: string;
 }
 
+export interface MemberWithProfile {
+  userId: string;
+  name: string;
+  photoUrl?: string;
+  university?: string;
+  age?: number;
+  about?: string;
+  interests: string[];
+  skills: string[];
+  level: number;
+  xp: number;
+  streak: number;
+  role?: string;
+  status: string;
+  joinedAt: string;
+}
+
 export type UrgentFilter = 'all' | 'this-week' | 'quick-project' | 'starting-soon';

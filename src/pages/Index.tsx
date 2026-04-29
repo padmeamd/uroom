@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/Header';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
 import { FilterBar } from '@/components/room/FilterBar';
 import { SwipeCardStack } from '@/components/room/SwipeCardStack';
+import { RoomInfoSheet } from '@/components/room/RoomInfoSheet';
 import { Room, UrgentFilter } from '@/types/room';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -18,6 +19,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [detailRoom, setDetailRoom] = useState<Room | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     fetchRooms();
@@ -132,10 +135,17 @@ const Index = () => {
           onSwipeLeft={handleSwipeLeft}
           onSwipeRight={handleSwipeRight}
           onUndo={handleUndo}
+          onDetails={(room) => { setDetailRoom(room); setDetailOpen(true); }}
           canUndo={swipedRooms.length > 0}
           loading={loading}
         />
       </div>
+      <RoomInfoSheet
+        room={detailRoom}
+        open={detailOpen}
+        onOpenChange={(open) => { setDetailOpen(open); if (!open) setDetailRoom(null); }}
+        currentUserId={user?.id ?? ''}
+      />
     </AppLayout>
   );
 };

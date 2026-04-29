@@ -40,7 +40,7 @@ const ChatRoomPage = () => {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedMember, setSelectedMember] = useState<{ id: string; name: string; avatar: string } | null>(null);
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -309,11 +309,7 @@ const ChatRoomPage = () => {
                         {showAvatar && !message.isCurrentUser && (
                           <Avatar
                             className="w-8 h-8 border border-vhs-green/30 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
-                            onClick={() => setSelectedMember({
-                              id: message.senderId,
-                              name: message.senderName,
-                              avatar: message.senderAvatar,
-                            })}
+                            onClick={() => setSelectedMember(message.senderId)}
                           >
                             <AvatarImage src={message.senderAvatar} />
                             <AvatarFallback className="bg-vhs-green/20 text-vhs-green text-xs">
@@ -560,7 +556,7 @@ const ChatRoomPage = () => {
       </div>
 
       <MemberProfileSheet
-        member={selectedMember}
+        userId={selectedMember}
         open={!!selectedMember}
         onOpenChange={(open) => !open && setSelectedMember(null)}
       />

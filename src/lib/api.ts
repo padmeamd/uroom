@@ -26,7 +26,7 @@ async function request<T>(
 
   const response = await fetch(url, config);
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     tokenStorage.remove();
     window.location.href = '/login';
     throw new Error('Session expired — please log in again');
@@ -72,7 +72,7 @@ export const api = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     }).then(async (response) => {
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 401) {
         tokenStorage.remove();
         window.location.href = '/login';
         throw new Error('Session expired — please log in again');

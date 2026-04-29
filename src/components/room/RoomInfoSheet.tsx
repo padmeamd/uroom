@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Briefcase, MapPin, Users, Clock, Check, X } from 'lucide-react';
+import { Calendar, Briefcase, MapPin, Users, Clock, Check, X, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Room, MemberWithProfile } from '@/types/room';
@@ -139,6 +139,43 @@ export const RoomInfoSheet = ({ room, open, onOpenChange, currentUserId }: RoomI
                 </Badge>
               ))}
             </div>
+          )}
+
+          {/* Creator */}
+          {(room.creatorName || room.creatorAvatar) && (
+            <>
+              <div className="border-t border-border mx-4 mb-3" />
+              <div className="px-5 pb-4">
+                <span className="text-xs font-mono text-muted-foreground block mb-3">
+                  CREATED BY
+                </span>
+                <div
+                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50 cursor-pointer transition-colors"
+                  onClick={() => room.creatorId && openProfile(room.creatorId)}
+                >
+                  <div className="relative">
+                    <Avatar className="w-10 h-10 border-2 border-primary/50 shrink-0">
+                      <AvatarImage src={room.creatorAvatar} />
+                      <AvatarFallback className="bg-primary/20 text-primary text-xs font-mono">
+                        {room.creatorName?.charAt(0) ?? '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-card border border-primary/30 flex items-center justify-center">
+                      <Crown size={9} className="text-primary" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{room.creatorName}</p>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      @{room.creatorName?.toLowerCase().replace(/\s+/g, '_') ?? 'unknown'}
+                    </p>
+                  </div>
+                  <Badge className="text-[10px] font-mono bg-primary/20 text-primary border border-primary/30 shrink-0">
+                    CREATOR
+                  </Badge>
+                </div>
+              </div>
+            </>
           )}
 
           <div className="border-t border-border mx-4 mb-3" />

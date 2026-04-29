@@ -10,6 +10,7 @@ interface SwipeCardStackProps {
   onSwipeLeft: (room: Room) => void;
   onSwipeRight: (room: Room) => void;
   onUndo?: () => void;
+  onDetails?: (room: Room) => void;
   canUndo?: boolean;
   loading?: boolean;
 }
@@ -19,6 +20,7 @@ export function SwipeCardStack({
   onSwipeLeft,
   onSwipeRight,
   onUndo,
+  onDetails,
   canUndo = false,
   loading = false,
 }: SwipeCardStackProps) {
@@ -103,6 +105,7 @@ export function SwipeCardStack({
             dragElastic={0.8}
             onDragStart={() => setIsDragging(true)}
             onDragEnd={handleDragEnd}
+            onTap={() => onDetails?.(currentRoom)}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{
               scale: 1,
