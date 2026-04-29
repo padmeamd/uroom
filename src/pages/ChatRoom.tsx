@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Paperclip, X, FileText, Download, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, Send, Calendar, Briefcase, Users, MoreVertical, Image, Paperclip, X, FileText, Download, Loader2, MapPin, LogOut } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { MemberProfileSheet } from '@/components/room/MemberProfileSheet';
 import { LocationPicker, type LocationData } from '@/components/room/LocationPicker';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { api } from '@/lib/api';
-import { ChatRoom as ChatRoomData, Message } from '@/types/room';
+import { ChatRoom as ChatRoomData, Message, MemberWithProfile } from '@/types/room';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Attachment {
@@ -41,6 +43,8 @@ const ChatRoomPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [members, setMembers] = useState<MemberWithProfile[]>([]);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +81,14 @@ const ChatRoomPage = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (membersOpen && room) {
+      api.get<MemberWithProfile[]>(`/api/rooms/${room.roomId}/members/profiles`)
+        .then(setMembers)
+        .catch(console.error);
+    }
+  }, [membersOpen, room]);
 
   const formatMessageTime = (dateStr: string) => {
     return format(new Date(dateStr), 'h:mm a');
@@ -166,6 +178,17 @@ const ChatRoomPage = () => {
       toast.error('Failed to send message');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleLeaveRoom = async () => {
+    if (!room) return;
+    try {
+      await api.delete(`/api/rooms/${room.roomId}/leave?userId=${user!.id}`);
+      toast.success('You have left the room');
+      navigate('/chats');
+    } catch (error) {
+      toast.error('Failed to leave room');
     }
   };
 
@@ -264,19 +287,31 @@ const ChatRoomPage = () => {
                 <Calendar size={12} className="text-vhs-green shrink-0" />
               )}
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <button
+              onClick={() => setMembersOpen(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-vhs-green transition-colors"
+            >
               <Users size={10} />
               <span>{room.memberCount} members</span>
-            </div>
+            </button>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-vhs-green"
-          >
-            <MoreVertical size={18} />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-vhs-green">
+                <MoreVertical size={18} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                onClick={handleLeaveRoom}
+                className="text-destructive focus:text-destructive gap-2"
+              >
+                <LogOut size={15} />
+                Exit Chat
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       }
     >
@@ -560,6 +595,37 @@ const ChatRoomPage = () => {
         open={!!selectedMember}
         onOpenChange={(open) => !open && setSelectedMember(null)}
       />
+
+      <Sheet open={membersOpen} onOpenChange={setMembersOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl border-t border-primary/30 bg-card max-h-[75vh] overflow-y-auto p-0">
+          <SheetHeader className="px-4 pt-4 pb-2">
+            <div className="flex justify-center mb-2">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            <SheetTitle className="font-mono text-sm text-muted-foreground">MEMBERS ({members.length})</SheetTitle>
+          </SheetHeader>
+          <div className="divide-y divide-border px-2 pb-4">
+            {members.map((m) => (
+              <button
+                key={m.userId}
+                onClick={() => { setMembersOpen(false); setSelectedMember(m.userId); }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-secondary/50 transition-colors text-left"
+              >
+                <Avatar className="w-10 h-10 border border-primary/30 shrink-0">
+                  <AvatarImage src={m.photoUrl} />
+                  <AvatarFallback className="bg-primary/20 text-primary font-mono text-sm">
+                    {m.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-foreground truncate">{m.name}</p>
+                  <p className="text-xs text-muted-foreground font-mono">LVL {m.level} · {m.xp} XP{m.role ? ` · ${m.role}` : ''}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <LocationPicker
         open={locationPickerOpen}
